@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "buildCommand": "cd crm-backend-repo-base && npm install && npm run build",
+  "outputDirectory": "crm-backend-repo-base/public",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index.js"
+    }
+  ],
+  "functions": {
+    "crm-backend-repo-base/api/index.js": {
+      "includeFiles": "crm-backend-repo-base/dist/**"
+    }
+  }
+}
