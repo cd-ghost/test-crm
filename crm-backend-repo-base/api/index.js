@@ -1,22 +1,9 @@
-let createApp;
+// api/index.js — Vercel serverless entry point
+// TypeScript compiles src/ → dist/ (see tsconfig.json outDir)
+// This file lives at crm-backend-repo-base/api/index.js
+// So ../dist/app resolves to crm-backend-repo-base/dist/app.js ✓
 
-try {
-  // Try compiled build folder path
-  createApp = require('../build/app').createApp;
-} catch (buildErr) {
-  try {
-    // Try raw source path (Vercel's compiler handles this on the fly)
-    createApp = require('../src/app').createApp;
-  } catch (srcErr) {
-    try {
-      // Fallback path check
-      createApp = require('./build/app').createApp;
-    } catch (finalErr) {
-      console.error("Backend initialization path mapping failed completely.");
-      throw new Error("Could not find application instance module in any known directory.");
-    }
-  }
-}
+const { createApp } = require('../dist/app');
 
 const app = createApp();
 
