@@ -6,6 +6,7 @@
   "type": "commonjs",
   "main": "dist/server.js",
   "scripts": {
+    "vercel-build": "tsc -p tsconfig.json",
     "build": "tsc -p tsconfig.json && node -e \"require('fs').existsSync('dist/app.js') || process.exit(1)\"",
     "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
