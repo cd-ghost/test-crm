@@ -1554,13 +1554,14 @@ let ACCESS_LIST = {
   "rohan":      { password: "RTAV",  display: "Rohan" },
   "roshan":     { password: "1234",  display: "Roshan" },
   "mahalaxmi":  { password: "1234",  display: "Mahalaxmi" }
+  "leander":    { password: "2627",  display: "Leander"}
 };
 
 /* ============================================================
    STORE — async engine backed by fetch()
    Falls back to in-memory state when server is unreachable
 ============================================================ */
-const API_BASE_URL = window.CRM_API_BASE_URL || "http://localhost:3003/api";
+const API_BASE_URL = window.CRM_API_BASE_URL || "";
 
 const Store = (() => {
   /* =====================================================
