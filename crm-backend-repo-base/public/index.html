@@ -1561,7 +1561,7 @@ let ACCESS_LIST = {
    STORE — async engine backed by fetch()
    Falls back to in-memory state when server is unreachable
 ============================================================ */
-const API_BASE_URL = window.CRM_API_BASE_URL || "";
+const API_BASE_URL = window.CRM_API_BASE_URL || "/api";
 
 const Store = (() => {
   /* =====================================================
