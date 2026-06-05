@@ -1,27 +1,27 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build",
+  "version": 2,
   "builds": [
     {
-      "src": "public/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "api/index.js",
+      "src": "crm-backend-repo-base/api/index.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["build/**"]
+        "includeFiles": ["crm-backend-repo-base/dist/**"]
       }
+    },
+    {
+      "src": "crm-backend-repo-base/public/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/index.js"
+      "dest": "crm-backend-repo-base/api/index.js"
     },
     {
       "src": "/(.*)",
-      "dest": "/public/$1"
+      "dest": "crm-backend-repo-base/public/$1"
     }
   ]
 }
