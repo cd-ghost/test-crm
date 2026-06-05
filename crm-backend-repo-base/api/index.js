@@ -1,4 +1,4 @@
-const { createApp } = require('../dist/app');
+const { createApp } = require('../dist/server');
 
 // Vercel serverless entrypoint.
 // - Expects DATABASE_URL, JWT_SECRET, etc injected via Vercel environment variables.
