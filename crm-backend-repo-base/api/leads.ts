@@ -8,7 +8,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { name, email } = req.body;
     if (!name || !email) return res.status(400).json({ error: 'Fields required' });
     
-    await sql('INSERT INTO leads (name, email) VALUES ($1, $2)', [name, email]);
+    // Fixed: Using the required tagged template literal syntax with backticks
+    await sql`INSERT INTO leads (name, email) VALUES (${name}, ${email})`;
+    
     return res.status(200).json({ success: true });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
