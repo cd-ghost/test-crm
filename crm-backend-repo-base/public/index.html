@@ -2010,7 +2010,77 @@ const Store = (() => {
     if (data.quotes && data.quotes.length > 0) _mem.quotes = data.quotes;
   }
 
-  return { get, save, remove, update, read, seed };
+  /** Fetch all data from individual API endpoints */
+  async function fetchAll() {
+    const endpoints = {
+      leads: '/api/leads',
+      contacts: '/api/contacts',
+      deals: '/api/deals',
+      tasks: '/api/tasks',
+      companies: '/api/companies',
+      activities: '/api/activities',
+      quotes: '/api/quotes'
+    };
+    
+    const results = {};
+    const errors = [];
+    
+    // Fetch all resources in parallel
+    const fetchPromises = Object.entries(endpoints).map(async ([key, url]) => {
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          results[key] = data;
+        } else {
+          errors.push(`${key}: HTTP ${res.status}`);
+        }
+      } catch (e) {
+        errors.push(`${key}: ${e.message}`);
+      }
+    });
+    
+    await Promise.all(fetchPromises);
+    
+    if (errors.length > 0) {
+      console.warn('Some API fetches failed:', errors);
+    }
+    
+    return results;
+  }
+
+  /** Fetch single resource collection from API */
+  async function fetchCollection(collectionName) {
+    const endpoints = {
+      leads: '/api/leads',
+      contacts: '/api/contacts',
+      deals: '/api/deals',
+      tasks: '/api/tasks',
+      companies: '/api/companies',
+      activities: '/api/activities',
+      quotes: '/api/quotes'
+    };
+    
+    const url = endpoints[collectionName];
+    if (!url) return [];
+    
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        // Update in-memory store
+        if (Array.isArray(data)) {
+          _mem[collectionName] = data;
+        }
+        return data;
+      }
+    } catch (e) {
+      console.warn(`Failed to fetch ${collectionName}:`, e);
+    }
+    return _mem[collectionName] || [];
+  }
+
+  return { get, save, remove, update, read, seed, fetchAll, fetchCollection };
 })();
 
 /* ============================================================
@@ -2038,17 +2108,76 @@ function sanitize(str) {
 }
 
 /* ============================================================
-   SESSION
+   SESSION — localStorage persistence
 ============================================================ */
+const SESSION_KEY = 'rtav_session';
 let currentUser = null;
 
 function setSession(user) {
   currentUser = user;
+  // Persist to localStorage for session recovery on refresh
+  if (user) {
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    } catch (e) {
+      console.warn('Failed to persist session:', e);
+    }
+  }
+}
+
+function getSession() {
+  try {
+    const stored = localStorage.getItem(SESSION_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch (e) {
+    console.warn('Failed to restore session:', e);
+    return null;
+  }
 }
 
 function clearSession() {
   currentUser = null;
+  try {
+    localStorage.removeItem(SESSION_KEY);
+  } catch (e) {
+    console.warn('Failed to clear session:', e);
+  }
 }
+
+/* ============================================================
+   AUTH STATE RESTORATION — runs on DOMContentLoaded
+   Ensures logged-in users stay logged in after refresh
+============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  const savedSession = getSession();
+  if (savedSession && savedSession.username) {
+    // Restore user state
+    currentUser = savedSession;
+    
+    // Verify the user still exists in ACCESS_LIST (account wasn't removed while logged out)
+    const user = ACCESS_LIST[savedSession.username];
+    if (user) {
+      // Restore sidebar user display
+      const display = savedSession.display || savedSession.username;
+      const sidebarUserEl = document.getElementById('sidebar-username-display');
+      const sidebarAvatarEl = document.getElementById('sidebar-avatar');
+      if (sidebarUserEl) sidebarUserEl.textContent = display;
+      if (sidebarAvatarEl) sidebarAvatarEl.textContent = display.charAt(0).toUpperCase();
+      
+      // Show app, hide login page
+      const loginPage = document.getElementById('login-page');
+      const appEl = document.getElementById('app');
+      if (loginPage) loginPage.style.display = 'none';
+      if (appEl) appEl.classList.add('visible');
+      
+      // Boot the application
+      App.boot();
+    } else {
+      // User no longer exists, clear session
+      clearSession();
+    }
+  }
+});
 
 /* ============================================================
    APP OBJECT
@@ -2067,10 +2196,24 @@ const App = {
     $("loading-overlay").classList.remove("hidden");
 
     try {
-      const data = await Store.get();
-      Store.seed(data);
+      // First try to fetch all data from individual API endpoints
+      const apiData = await Store.fetchAll();
+      Store.seed(apiData);
+      
+      // If API endpoints returned empty data, fall back to /api/sync
+      const hasApiData = Object.values(apiData).some(arr => arr && arr.length > 0);
+      if (!hasApiData) {
+        const syncData = await Store.get();
+        Store.seed(syncData);
+      }
     } catch (e) {
-      // Server unavailable — start with empty state
+      // Server unavailable — try sync endpoint as fallback
+      try {
+        const data = await Store.get();
+        Store.seed(data);
+      } catch (e2) {
+        console.warn('All data sources unavailable:', e2);
+      }
     }
 
     $("loading-overlay").classList.add("hidden");
@@ -2097,6 +2240,22 @@ const App = {
 
     // Render dashboard
     App.navigateTo("dashboard");
+  },
+
+  /* ----------------------------------------------------------
+     REFRESH DATA — fetch latest from API endpoints
+  ---------------------------------------------------------- */
+  async refreshData(collectionName) {
+    if (collectionName) {
+      // Refresh single collection
+      await Store.fetchCollection(collectionName);
+      App.renderCurrentSection();
+    } else {
+      // Refresh all collections
+      await Store.fetchAll();
+      App.renderCurrentSection();
+    }
+    App.updateBadges();
   },
 
   /* ----------------------------------------------------------
@@ -2777,18 +2936,28 @@ const App = {
     dropdown.classList.add("open");
   },
 
-  moveDealStage(id, newStage) {
+  async moveDealStage(id, newStage) {
     const deals = Store.read("deals");
     const deal = deals.find(d => d.id === id);
     if (!deal || deal.stage === newStage) return;
     const oldStage = deal.stage;
     deal.stage = newStage;
+    
+    // Persist to API
+    try {
+      await Store.update("deals", id, { stage: newStage });
+    } catch (e) {
+      console.warn('Failed to update deal stage on server:', e);
+    }
+    
     const stageLabel = App.DEAL_STAGES.find(s => s.key === newStage)?.label || newStage;
     const oldLabel   = App.DEAL_STAGES.find(s => s.key === oldStage)?.label  || oldStage;
     App.logActivity({ type:"note", title:`Deal moved: ${deal.name}`, meta: `${oldLabel} → ${stageLabel}` });
     toast(`Moved to "${stageLabel}" ✓`, "success");
     App.updateBadges();
     App.renderDeals();
+    // Refresh from API
+    App.refreshData('deals');
   },
 
   setDealsView(view) {
@@ -3033,22 +3202,45 @@ const App = {
     wrap.innerHTML = html;
   },
 
-  toggleTask(id) {
+  async toggleTask(id) {
     const tasks = Store.read("tasks");
     const t = tasks.find(x => x.id === id);
     if (!t) return;
-    t.status = t.status === "completed" ? "pending" : "completed";
-    toast(t.status === "completed" ? "Task marked complete." : "Task reopened.", "info");
+    const newStatus = t.status === "completed" ? "pending" : "completed";
+    
+    // Update in memory
+    t.status = newStatus;
+    
+    // Persist to API
+    try {
+      await Store.update("tasks", id, { status: newStatus });
+    } catch (e) {
+      console.warn('Failed to update task status on server:', e);
+    }
+    
+    toast(newStatus === "completed" ? "Task marked complete." : "Task reopened.", "info");
     App.renderTasks();
+    // Refresh from API
+    App.refreshData('tasks');
   },
 
-  deleteTask(id) {
+  async deleteTask(id) {
     if (!confirm("Delete this task?")) return;
     const arr = Store.read("tasks");
     const idx = arr.findIndex(t => t.id === id);
     if (idx >= 0) arr.splice(idx, 1);
+    
+    // Delete from API
+    try {
+      await Store.remove("tasks", id);
+    } catch (e) {
+      console.warn('Failed to delete task from server:', e);
+    }
+    
     toast("Task deleted.", "info");
     App.renderTasks();
+    // Refresh from API
+    App.refreshData('tasks');
   },
 
   /* ----------------------------------------------------------
@@ -3282,8 +3474,11 @@ const App = {
     App.updateBadges();
     // Clear form
     ["lead-fname","lead-lname","lead-company","lead-industry","lead-city","lead-email","lead-phone","lead-notes"].forEach(id => { const el = $(id); if(el) el.value = ""; });
-    // Re-render to show new record immediately
+    // Re-render to show new record immediately and sync with backend
     App.renderCurrentSection();
+    // Refresh data from API endpoints
+    App.refreshData('leads');
+    App.refreshData('contacts');
   },
 
   async saveContact() {
@@ -3308,6 +3503,8 @@ const App = {
     toast("Contact saved.", "success");
     App.renderCurrentSection();
     ["contact-fname","contact-lname","contact-company","contact-email","contact-phone","contact-title"].forEach(id => $(id).value = "");
+    // Refresh data from API endpoints
+    App.refreshData('contacts');
   },
 
   async saveCompany() {
@@ -3328,6 +3525,8 @@ const App = {
     toast("Company saved.", "success");
     App.renderCurrentSection();
     ["co-name","co-contact-name","co-industry","co-city","co-phone","co-email","co-employees","co-website"].forEach(id => $(id).value = "");
+    // Refresh data from API endpoints
+    App.refreshData('companies');
   },
 
   async saveDeal() {
@@ -3349,6 +3548,8 @@ const App = {
     App.updateBadges();
     App.renderCurrentSection();
     ["deal-name","deal-company","deal-value","deal-close","deal-owner","deal-notes"].forEach(id => $(id).value = "");
+    // Refresh data from API endpoints
+    App.refreshData('deals');
   },
 
   async saveQuote() {
@@ -3367,6 +3568,8 @@ const App = {
     toast("Quote saved.", "success");
     App.renderCurrentSection();
     ["quote-number","quote-customer","quote-amount","quote-desc"].forEach(id => $(id).value = "");
+    // Refresh data from API endpoints
+    App.refreshData('quotes');
   },
 
   editQuote(id) {
@@ -3437,6 +3640,8 @@ const App = {
     toast("Task updated. Opening Google Calendar… 📅", "success");
     App.saveToGoogleCalendar(changes);
     App.renderTasks();
+    // Refresh data from API endpoints
+    App.refreshData('tasks');
   },
 
   async saveTask() {
@@ -3458,6 +3663,8 @@ const App = {
     App.saveToGoogleCalendar(record);
     App.renderCurrentSection();
     ["task-title","task-related","task-due","task-time"].forEach(id => $(id).value = "");
+    // Refresh data from API endpoints
+    App.refreshData('tasks');
   },
 
   saveUser() {
