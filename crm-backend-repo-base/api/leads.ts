@@ -4,7 +4,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
-    const sql = neon(process.env.DATABASE_URL!);
+    // Ensure DATABASE_URL has ssl=true for secure serverless connections
+    const dbUrl = process.env.DATABASE_URL!;
+    const url = new URL(dbUrl);
+    url.searchParams.set('ssl', 'true');
+    const sql = neon(url.toString());
     
     // 1. Automatically build the table if it's missing
     await sql`
