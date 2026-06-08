@@ -2,32 +2,34 @@ import { neon } from '@neondatabase/serverless';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
-    // Ensure DATABASE_URL has ssl=true for secure serverless connections
-    const dbUrl = process.env.DATABASE_URL!;
-    const url = new URL(dbUrl);
-    url.searchParams.set('ssl', 'true');
-    const sql = neon(url.toString());
+    const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl) {
+      return res.status(500).json({ error: 'DATABASE_URL environment variable is missing on Vercel.' });
+    }
     
-    // 1. Automatically build the table if it's missing
-    await sql`
-      CREATE TABLE IF NOT EXISTS leads (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `;
+    const sql = neon(dbUrl);
 
-    const { name, email } = req.body;
-    if (!name || !email) return res.status(400).json({ error: 'Fields required' });
-    
-    // 2. Insert the clean record using tagged templates
-    await sql`INSERT INTO leads (name, email) VALUES (${name}, ${email})`;
-    
-    return res.status(200).json({ success: true });
+    // 1. HANDLE GET REQUESTS (Fetch data to display on load/refresh)
+    if (req.method === 'GET') {
+      const data = await sql`SELECT * FROM leads ORDER BY created_at DESC`;
+      return res.status(200).json(data);
+    }
+
+    // 2. HANDLE POST REQUESTS (Submit new form data)
+    if (req.method === 'POST') {
+      const { name, email } = req.body || {};
+      if (!name || !email) {
+        return res.status(400).json({ error: 'Both name and email fields are required.' });
+      }
+      
+      await sql`INSERT INTO leads (name, email) VALUES (${name}, ${email})`;
+      return res.status(200).json({ success: true });
+    }
+
+    // Catch-all for unsupported request methods (PUT, DELETE, etc.)
+    return res.status(405).json({ error: 'Method not allowed' });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message || 'Unknown database error' });
   }
 }
