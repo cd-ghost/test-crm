@@ -16,9 +16,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         id TEXT PRIMARY KEY,
         first_name TEXT NOT NULL,
         last_name TEXT NOT NULL,
+        company TEXT,
         email TEXT NOT NULL,
         phone TEXT,
-        company TEXT,
+        title TEXT,
+        status TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `;
@@ -31,15 +33,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 3. POST: Create new contact
     if (req.method === 'POST') {
-      const { id, first_name, last_name, email, phone, company } = req.body || {};
+      const { id, first_name, last_name, company, email, phone, title, status } = req.body || {};
       if (!first_name || !last_name || !email) {
         return res.status(400).json({ error: 'first_name, last_name, and email are required.' });
       }
       
       await sql`
-        INSERT INTO contacts (id, first_name, last_name, email, phone, company)
-        VALUES (${id}, ${first_name}, ${last_name}, ${email}, ${phone || null}, ${company || null})
+        INSERT INTO contacts (id, first_name, last_name, company, email, phone, title, status)
+        VALUES (${id}, ${first_name}, ${last_name}, ${company || null}, ${email}, ${phone || null}, ${title || null}, ${status || 'active'})
       `;
+      return res.status(200).json({ success: true });
+    }
+
+    // 4. PUT: Update contact
+    if (req.method === 'PUT') {
+      const { id } = req.query;
+      const { first_name, last_name, company, email, phone, title, status } = req.body || {};
+      
+      await sql`
+        UPDATE contacts 
+        SET first_name = ${first_name}, last_name = ${last_name}, company = ${company}, 
+            email = ${email}, phone = ${phone}, title = ${title}, status = ${status}
+        WHERE id = ${id}
+      `;
+      return res.status(200).json({ success: true });
+    }
+
+    // 5. DELETE: Remove contact
+    if (req.method === 'DELETE') {
+      const { id } = req.query;
+      await sql`DELETE FROM contacts WHERE id = ${id}`;
       return res.status(200).json({ success: true });
     }
 

@@ -11,13 +11,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const sql = neon(dbUrl);
 
     // Fetch all collections in parallel
-    const [leads, contacts, deals, tasks, companies, activities] = await Promise.all([
-      sql`SELECT * FROM leads ORDER BY created_at DESC`,
-      sql`SELECT * FROM contacts ORDER BY created_at DESC`,
-      sql`SELECT * FROM deals ORDER BY created_at DESC`,
-      sql`SELECT * FROM tasks ORDER BY created_at DESC`,
-      sql`SELECT * FROM companies ORDER BY created_at DESC`,
-      sql`SELECT * FROM activities ORDER BY created_at DESC`
+    const [leads, contacts, deals, tasks, companies, activities, quotes] = await Promise.all([
+      sql`SELECT * FROM leads ORDER BY created_at DESC LIMIT 1000`.catch(() => []),
+      sql`SELECT * FROM contacts ORDER BY created_at DESC LIMIT 1000`.catch(() => []),
+      sql`SELECT * FROM deals ORDER BY created_at DESC LIMIT 1000`.catch(() => []),
+      sql`SELECT * FROM tasks ORDER BY created_at DESC LIMIT 1000`.catch(() => []),
+      sql`SELECT * FROM companies ORDER BY created_at DESC LIMIT 1000`.catch(() => []),
+      sql`SELECT * FROM activities ORDER BY created_at DESC LIMIT 1000`.catch(() => []),
+      sql`SELECT * FROM quotes ORDER BY created_at DESC LIMIT 1000`.catch(() => [])
     ]);
 
     return res.status(200).json({
@@ -26,10 +27,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       deals: deals || [],
       tasks: tasks || [],
       companies: companies || [],
-      activities: activities || []
+      activities: activities || [],
+      quotes: quotes || []
     });
   } catch (error: any) {
-    // If tables don't exist yet, return empty collections
+    // If tables don't exist yet, return empty collections (app will use mock data)
     console.warn('Sync endpoint error (tables may not exist yet):', error.message);
     return res.status(200).json({
       leads: [],
@@ -37,7 +39,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       deals: [],
       tasks: [],
       companies: [],
-      activities: []
+      activities: [],
+      quotes: []
     });
   }
 }

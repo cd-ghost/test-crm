@@ -1872,27 +1872,126 @@ const Store = (() => {
   /** Lightweight uid for new records */
   function _uid() { return Math.random().toString(36).slice(2, 10); }
 
-  /** No-op async get (data already seeded) */
-  async function get() { return { ..._mem }; }
+  /** Fetch live data from Neon via /api/sync, fallback to mock data */
+  async function get() {
+    try {
+      const res = await fetch('/api/sync');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      
+      // Merge database data with mock data (database overrides if not empty)
+      if (data.leads && data.leads.length > 0) _mem.leads = data.leads;
+      if (data.contacts && data.contacts.length > 0) _mem.contacts = data.contacts;
+      if (data.deals && data.deals.length > 0) _mem.deals = data.deals;
+      if (data.tasks && data.tasks.length > 0) _mem.tasks = data.tasks;
+      if (data.companies && data.companies.length > 0) _mem.companies = data.companies;
+      if (data.activities && data.activities.length > 0) _mem.activities = data.activities;
+      if (data.quotes && data.quotes.length > 0) _mem.quotes = data.quotes;
+      
+      return { ..._mem };
+    } catch (err) {
+      console.warn('Failed to fetch from /api/sync, using mock data:', err);
+      return { ..._mem };
+    }
+  }
 
-  /** Save: just push to in-memory array */
+  /** Save to API endpoint + in-memory array */
   async function save(collectionName, record) {
     if (!_mem[collectionName]) _mem[collectionName] = [];
     const payload = { ...record, id: record.id || _uid(), created_at: record.created_at || new Date().toISOString() };
+    
+    // API endpoint mapping
+    const endpoints = {
+      leads:      '/api/leads',
+      contacts:   '/api/contacts',
+      deals:      '/api/deals',
+      tasks:      '/api/tasks',
+      companies:  '/api/companies',
+      activities: '/api/activities',
+      quotes:     '/api/quotes'
+    };
+    
+    // POST to API if endpoint exists
+    if (endpoints[collectionName]) {
+      try {
+        const res = await fetch(endpoints[collectionName], {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) console.warn(`POST ${collectionName}: ${await res.text()}`);
+      } catch (err) {
+        console.warn(`Failed to save ${collectionName}:`, err);
+      }
+    }
+    
+    // Add to in-memory store
     _mem[collectionName].push(payload);
     return payload;
   }
 
-  /** Remove from in-memory array */
+  /** Remove from database + in-memory array */
   async function remove(collectionName, id) {
     if (!_mem[collectionName]) return;
+    
+    // DELETE from API if endpoint exists
+    const endpoints = {
+      leads: '/api/leads',
+      contacts: '/api/contacts',
+      deals: '/api/deals',
+      tasks: '/api/tasks',
+      companies: '/api/companies',
+      activities: '/api/activities',
+      quotes: '/api/quotes'
+    };
+    
+    if (endpoints[collectionName]) {
+      try {
+        const res = await fetch(`${endpoints[collectionName]}/${id}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (!res.ok) console.warn(`DELETE ${collectionName}/${id}: ${await res.text()}`);
+      } catch (err) {
+        console.warn(`Failed to delete ${collectionName}/${id}:`, err);
+      }
+    }
+    
+    // Remove from in-memory
     _mem[collectionName] = _mem[collectionName].filter(r => String(r.id) !== String(id));
   }
 
-  /** Update in-memory record */
+  /** Update database + in-memory record */
   async function update(collectionName, id, changes) {
     const arr = _mem[collectionName] || [];
     const idx = arr.findIndex(r => String(r.id) === String(id));
+    
+    // PUT to API if endpoint exists
+    const endpoints = {
+      leads: '/api/leads',
+      contacts: '/api/contacts',
+      deals: '/api/deals',
+      tasks: '/api/tasks',
+      companies: '/api/companies',
+      activities: '/api/activities',
+      quotes: '/api/quotes'
+    };
+    
+    if (endpoints[collectionName] && idx >= 0) {
+      try {
+        const updated = { ...arr[idx], ...changes };
+        const res = await fetch(`${endpoints[collectionName]}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updated)
+        });
+        if (!res.ok) console.warn(`PUT ${collectionName}/${id}: ${await res.text()}`);
+      } catch (err) {
+        console.warn(`Failed to update ${collectionName}/${id}:`, err);
+      }
+    }
+    
+    // Update in-memory
     if (idx >= 0) Object.assign(arr[idx], changes);
     return arr[idx];
   }
@@ -1900,8 +1999,16 @@ const Store = (() => {
   /** Direct in-memory read */
   function read(collectionName) { return _mem[collectionName] || []; }
 
-  /** Seed (no-op — already seeded above) */
-  function seed(data) {}
+  /** Seed: populate _mem with fetched data */
+  function seed(data) {
+    if (data.leads && data.leads.length > 0) _mem.leads = data.leads;
+    if (data.contacts && data.contacts.length > 0) _mem.contacts = data.contacts;
+    if (data.deals && data.deals.length > 0) _mem.deals = data.deals;
+    if (data.tasks && data.tasks.length > 0) _mem.tasks = data.tasks;
+    if (data.companies && data.companies.length > 0) _mem.companies = data.companies;
+    if (data.activities && data.activities.length > 0) _mem.activities = data.activities;
+    if (data.quotes && data.quotes.length > 0) _mem.quotes = data.quotes;
+  }
 
   return { get, save, remove, update, read, seed };
 })();

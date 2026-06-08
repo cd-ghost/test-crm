@@ -12,52 +12,56 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 1. Ensure table exists
     await sql`
-      CREATE TABLE IF NOT EXISTS activities (
+      CREATE TABLE IF NOT EXISTS quotes (
         id TEXT PRIMARY KEY,
-        type TEXT NOT NULL,
-        title TEXT,
-        meta TEXT,
+        number TEXT NOT NULL,
+        customer TEXT NOT NULL,
+        amount NUMERIC,
+        status TEXT,
+        description TEXT,
+        valid_until TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `;
 
-    // 2. GET: Fetch all activities
+    // 2. GET: Fetch all quotes
     if (req.method === 'GET') {
-      const data = await sql`SELECT * FROM activities ORDER BY created_at DESC`;
+      const data = await sql`SELECT * FROM quotes ORDER BY created_at DESC`;
       return res.status(200).json(data);
     }
 
-    // 3. POST: Create new activity
+    // 3. POST: Create new quote
     if (req.method === 'POST') {
-      const { id, type, title, meta } = req.body || {};
-      if (!type) {
-        return res.status(400).json({ error: 'type is required.' });
+      const { id, number, customer, amount, status, description, valid_until } = req.body || {};
+      if (!number || !customer) {
+        return res.status(400).json({ error: 'number and customer are required.' });
       }
       
       await sql`
-        INSERT INTO activities (id, type, title, meta)
-        VALUES (${id}, ${type}, ${title || null}, ${meta || null})
+        INSERT INTO quotes (id, number, customer, amount, status, description, valid_until)
+        VALUES (${id}, ${number}, ${customer}, ${amount || null}, ${status || 'draft'}, ${description || null}, ${valid_until || null})
       `;
       return res.status(200).json({ success: true });
     }
 
-    // 4. PUT: Update activity
+    // 4. PUT: Update quote
     if (req.method === 'PUT') {
       const { id } = req.query;
-      const { type, title, meta } = req.body || {};
+      const { number, customer, amount, status, description, valid_until } = req.body || {};
       
       await sql`
-        UPDATE activities 
-        SET type = ${type}, title = ${title}, meta = ${meta}
+        UPDATE quotes 
+        SET number = ${number}, customer = ${customer}, amount = ${amount}, 
+            status = ${status}, description = ${description}, valid_until = ${valid_until}
         WHERE id = ${id}
       `;
       return res.status(200).json({ success: true });
     }
 
-    // 5. DELETE: Remove activity
+    // 5. DELETE: Remove quote
     if (req.method === 'DELETE') {
       const { id } = req.query;
-      await sql`DELETE FROM activities WHERE id = ${id}`;
+      await sql`DELETE FROM quotes WHERE id = ${id}`;
       return res.status(200).json({ success: true });
     }
 

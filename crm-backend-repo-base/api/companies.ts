@@ -16,8 +16,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         industry TEXT,
+        city TEXT,
+        revenue TEXT,
+        employees NUMERIC,
         website TEXT,
-        phone TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `;
@@ -30,15 +32,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 3. POST: Create new company
     if (req.method === 'POST') {
-      const { id, name, industry, website, phone } = req.body || {};
+      const { id, name, industry, city, revenue, employees, website } = req.body || {};
       if (!name) {
         return res.status(400).json({ error: 'name is required.' });
       }
       
       await sql`
-        INSERT INTO companies (id, name, industry, website, phone)
-        VALUES (${id}, ${name}, ${industry || null}, ${website || null}, ${phone || null})
+        INSERT INTO companies (id, name, industry, city, revenue, employees, website)
+        VALUES (${id}, ${name}, ${industry || null}, ${city || null}, ${revenue || null}, ${employees || null}, ${website || null})
       `;
+      return res.status(200).json({ success: true });
+    }
+
+    // 4. PUT: Update company
+    if (req.method === 'PUT') {
+      const { id } = req.query;
+      const { name, industry, city, revenue, employees, website } = req.body || {};
+      
+      await sql`
+        UPDATE companies 
+        SET name = ${name}, industry = ${industry}, city = ${city}, 
+            revenue = ${revenue}, employees = ${employees}, website = ${website}
+        WHERE id = ${id}
+      `;
+      return res.status(200).json({ success: true });
+    }
+
+    // 5. DELETE: Remove company
+    if (req.method === 'DELETE') {
+      const { id } = req.query;
+      await sql`DELETE FROM companies WHERE id = ${id}`;
       return res.status(200).json({ success: true });
     }
 

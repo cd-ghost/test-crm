@@ -15,10 +15,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       CREATE TABLE IF NOT EXISTS tasks (
         id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
-        assigned_to TEXT,
+        related TEXT,
         due_date TEXT,
         priority TEXT,
-        completed BOOLEAN DEFAULT FALSE,
+        status TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `;
@@ -31,15 +31,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 3. POST: Create new task
     if (req.method === 'POST') {
-      const { id, title, assigned_to, due_date, priority, completed } = req.body || {};
+      const { id, title, related, due_date, priority, status } = req.body || {};
       if (!title) {
         return res.status(400).json({ error: 'title is required.' });
       }
       
       await sql`
-        INSERT INTO tasks (id, title, assigned_to, due_date, priority, completed)
-        VALUES (${id}, ${title}, ${assigned_to || null}, ${due_date || null}, ${priority || 'medium'}, ${completed || false})
+        INSERT INTO tasks (id, title, related, due_date, priority, status)
+        VALUES (${id}, ${title}, ${related || null}, ${due_date || null}, ${priority || 'medium'}, ${status || 'pending'})
       `;
+      return res.status(200).json({ success: true });
+    }
+
+    // 4. PUT: Update task
+    if (req.method === 'PUT') {
+      const { id } = req.query;
+      const { title, related, due_date, priority, status } = req.body || {};
+      
+      await sql`
+        UPDATE tasks 
+        SET title = ${title}, related = ${related}, due_date = ${due_date}, 
+            priority = ${priority}, status = ${status}
+        WHERE id = ${id}
+      `;
+      return res.status(200).json({ success: true });
+    }
+
+    // 5. DELETE: Remove task
+    if (req.method === 'DELETE') {
+      const { id } = req.query;
+      await sql`DELETE FROM tasks WHERE id = ${id}`;
       return res.status(200).json({ success: true });
     }
 

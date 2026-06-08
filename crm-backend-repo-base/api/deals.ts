@@ -14,11 +14,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await sql`
       CREATE TABLE IF NOT EXISTS deals (
         id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
+        name TEXT NOT NULL,
         company TEXT NOT NULL,
+        contact TEXT,
         value NUMERIC,
         stage TEXT,
         close_date TEXT,
+        owner TEXT,
+        probability NUMERIC,
+        notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `;
@@ -31,15 +35,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 3. POST: Create new deal
     if (req.method === 'POST') {
-      const { id, title, company, value, stage, close_date } = req.body || {};
-      if (!title || !company) {
-        return res.status(400).json({ error: 'title and company are required.' });
+      const { id, name, company, contact, value, stage, close_date, owner, probability, notes } = req.body || {};
+      if (!name || !company) {
+        return res.status(400).json({ error: 'name and company are required.' });
       }
       
       await sql`
-        INSERT INTO deals (id, title, company, value, stage, close_date)
-        VALUES (${id}, ${title}, ${company}, ${value || null}, ${stage || 'negotiation'}, ${close_date || null})
+        INSERT INTO deals (id, name, company, contact, value, stage, close_date, owner, probability, notes)
+        VALUES (${id}, ${name}, ${company}, ${contact || null}, ${value || null}, ${stage || 'new deals'}, ${close_date || null}, ${owner || null}, ${probability || null}, ${notes || null})
       `;
+      return res.status(200).json({ success: true });
+    }
+
+    // 4. PUT: Update deal
+    if (req.method === 'PUT') {
+      const { id } = req.query;
+      const { name, company, contact, value, stage, close_date, owner, probability, notes } = req.body || {};
+      
+      await sql`
+        UPDATE deals 
+        SET name = ${name}, company = ${company}, contact = ${contact}, value = ${value}, 
+            stage = ${stage}, close_date = ${close_date}, owner = ${owner}, 
+            probability = ${probability}, notes = ${notes}
+        WHERE id = ${id}
+      `;
+      return res.status(200).json({ success: true });
+    }
+
+    // 5. DELETE: Remove deal
+    if (req.method === 'DELETE') {
+      const { id } = req.query;
+      await sql`DELETE FROM deals WHERE id = ${id}`;
       return res.status(200).json({ success: true });
     }
 
