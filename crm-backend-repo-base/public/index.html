@@ -383,6 +383,120 @@
       .form-row { grid-template-columns: 1fr; }
     }
 
+    /* ============================================================
+       MOBILE NAV BAR
+    ============================================================ */
+    .mobile-nav {
+      display: none;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--bg-panel); border-top: 1px solid var(--border);
+      z-index: 200; height: 56px;
+      padding: 0 4px;
+      justify-content: space-around; align-items: stretch;
+    }
+    .mobile-nav-item {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      flex: 1; gap: 2px; cursor: pointer; color: var(--text-muted);
+      font-size: 10px; font-weight: 600; padding: 6px 2px;
+      border: none; background: none; transition: color .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mobile-nav-item .mn-icon { font-size: 18px; line-height: 1; }
+    .mobile-nav-item.active { color: var(--green); }
+    .mobile-nav-more-panel {
+      display: none; position: fixed; bottom: 56px; left: 0; right: 0;
+      background: var(--bg-panel); border-top: 1px solid var(--border);
+      z-index: 199; padding: 12px 0;
+    }
+    .mobile-nav-more-panel.open { display: block; }
+    .mobile-nav-more-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 20px; cursor: pointer; color: var(--text-secondary);
+      font-size: 14px; font-weight: 500;
+    }
+    .mobile-nav-more-item:hover, .mobile-nav-more-item.active { background: var(--bg-hover); color: var(--green); }
+    .mobile-nav-more-item .mn-icon { font-size: 18px; width: 24px; text-align: center; }
+    .mobile-nav-backdrop {
+      display: none; position: fixed; inset: 0; z-index: 198;
+    }
+    .mobile-nav-backdrop.open { display: block; }
+
+    @media (max-width: 768px) {
+      /* App shell */
+      #app.visible { flex-direction: column; }
+      .main-wrap { height: 100vh; }
+
+      /* Bottom nav */
+      .mobile-nav { display: flex; }
+
+      /* Content area: leave room for bottom nav */
+      .content-area { padding: 14px 12px; padding-bottom: 70px; }
+
+      /* Topbar: tighten up */
+      .topbar { padding: 0 12px; gap: 8px; }
+      .topbar-title { font-size: 14px; }
+      .search-wrap { max-width: none; flex: 1; }
+      .topbar-actions .btn span:not(.btn-icon) { display: none; }
+      .topbar-actions .btn { padding: 7px 10px; }
+
+      /* Dashboard grid → single column */
+      #section-dashboard > div[style*="grid"] {
+        display: flex !important; flex-direction: column !important; gap: 14px !important;
+      }
+
+      /* Stats grid */
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .stat-value { font-size: 22px; }
+
+      /* Kanban / board: allow horizontal scroll */
+      .kanban-wrap, .board-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+      /* Quotes KPI */
+      .quotes-kpi-row { grid-template-columns: 1fr; gap: 10px; }
+
+      /* Modals: full-screen on mobile */
+      .modal-overlay { padding: 0; align-items: flex-end; }
+      .modal {
+        max-width: 100%; width: 100%; max-height: 92vh;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      }
+
+      /* Tables: allow horizontal scroll */
+      .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      tbody td { padding: 9px 10px; font-size: 12px; }
+      thead th { padding: 8px 10px; font-size: 10px; }
+
+      /* Login card */
+      .login-card { padding: 28px 20px; }
+
+      /* Toast */
+      .toast-container { bottom: 66px; right: 10px; left: 10px; }
+      .toast { max-width: 100%; }
+
+      /* Detail grid */
+      .detail-grid { grid-template-columns: 1fr; }
+
+      /* Activity tabs: scrollable */
+      .activity-tabs { overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; padding-bottom: 4px; }
+
+      /* Leads toolbar */
+      .leads-toolbar { flex-wrap: wrap; }
+      .leads-search-wrap { max-width: 100%; width: 100%; }
+
+      /* Pipeline controls */
+      .pipeline-controls { flex-wrap: wrap; }
+
+      /* Task calendar cells */
+      .cal-cell { min-height: 44px; padding: 3px; font-size: 10px; }
+      .cal-day-name { font-size: 9px; padding-bottom: 4px; }
+      .cal-num { font-size: 10px !important; }
+      .cal-task-dot { display: none; }
+
+      /* Board columns */
+      .board-col { width: 220px; }
+      .kcol { min-width: 220px; }
+    }
+
     /* loading spinner */
     .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border-light); border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -800,7 +914,7 @@
               <table id="companies-table">
                 <thead>
                   <tr>
-                    <th>Company</th><th>Industry</th><th>City</th><th>Contacts</th><th>Revenue</th>
+                    <th>Company</th><th>Industry</th><th>City</th><th>Contact Name</th><th>Phone</th><th>Email</th>
                   </tr>
                 </thead>
                 <tbody id="companies-tbody"></tbody>
@@ -938,6 +1052,63 @@
         <label class="form-label">Company</label>
         <input class="form-control" id="lead-company" placeholder="Acme Corp" />
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Industry</label>
+          <select class="form-control" id="lead-industry">
+            <option value="">Select Industry</option>
+            <option value="Education Institution">Education Institution</option>
+            <option value="House of Worship">House of Worship</option>
+            <option value="Corporate">Corporate</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <select class="form-control" id="lead-city">
+            <option value="">Select City</option>
+            <option>Mumbai</option>
+            <option>Delhi</option>
+            <option>Bangalore</option>
+            <option>Hyderabad</option>
+            <option>Ahmedabad</option>
+            <option>Chennai</option>
+            <option>Kolkata</option>
+            <option>Surat</option>
+            <option>Pune</option>
+            <option>Jaipur</option>
+            <option>Lucknow</option>
+            <option>Kanpur</option>
+            <option>Nagpur</option>
+            <option>Indore</option>
+            <option>Thane</option>
+            <option>Bhopal</option>
+            <option>Visakhapatnam</option>
+            <option>Pimpri-Chinchwad</option>
+            <option>Patna</option>
+            <option>Vadodara</option>
+            <option>Ghaziabad</option>
+            <option>Ludhiana</option>
+            <option>Agra</option>
+            <option>Nashik</option>
+            <option>Faridabad</option>
+            <option>Meerut</option>
+            <option>Rajkot</option>
+            <option>Varanasi</option>
+            <option>Srinagar</option>
+            <option>Amritsar</option>
+            <option>Allahabad</option>
+            <option>Coimbatore</option>
+            <option>Ranchi</option>
+            <option>Guwahati</option>
+            <option>Chandigarh</option>
+            <option>Kochi</option>
+            <option>Bhubaneswar</option>
+            <option>Dehradun</option>
+            <option>Navi Mumbai</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
       <div class="form-group">
         <label class="form-label">Email</label>
         <input class="form-control" id="lead-email" type="email" placeholder="jane@example.com" />
@@ -1037,6 +1208,10 @@
         <label class="form-label">Company Name</label>
         <input class="form-control" id="co-name" placeholder="Acme Corp" />
       </div>
+      <div class="form-group">
+        <label class="form-label">Contact Name</label>
+        <input class="form-control" id="co-contact-name" placeholder="Jane Smith" />
+      </div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Industry</label>
@@ -1049,17 +1224,23 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Annual Revenue</label>
-          <input class="form-control" id="co-revenue" placeholder="$5M" />
+          <label class="form-label">Phone</label>
+          <input class="form-control" id="co-phone" placeholder="+91 98000 00000" />
         </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-control" id="co-email" type="email" placeholder="contact@company.com" />
+        </div>
+      </div>
+      <div class="form-row">
         <div class="form-group">
           <label class="form-label">Employees</label>
           <input class="form-control" id="co-employees" type="number" placeholder="50" />
         </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Website</label>
-        <input class="form-control" id="co-website" placeholder="[example.com](https://example.com)" />
+        <div class="form-group">
+          <label class="form-label">Website</label>
+          <input class="form-control" id="co-website" placeholder="example.com" />
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1200,6 +1381,37 @@
       <div class="form-group">
         <label class="form-label">Company</label>
         <input class="form-control" id="edit-lead-company" placeholder="Acme Corp" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Industry</label>
+          <select class="form-control" id="edit-lead-industry">
+            <option value="">Select Industry</option>
+            <option value="Education Institution">Education Institution</option>
+            <option value="House of Worship">House of Worship</option>
+            <option value="Corporate">Corporate</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <select class="form-control" id="edit-lead-city">
+            <option value="">Select City</option>
+            <option>Mumbai</option><option>Delhi</option><option>Bangalore</option>
+            <option>Hyderabad</option><option>Ahmedabad</option><option>Chennai</option>
+            <option>Kolkata</option><option>Surat</option><option>Pune</option>
+            <option>Jaipur</option><option>Lucknow</option><option>Kanpur</option>
+            <option>Nagpur</option><option>Indore</option><option>Thane</option>
+            <option>Bhopal</option><option>Visakhapatnam</option><option>Pimpri-Chinchwad</option>
+            <option>Patna</option><option>Vadodara</option><option>Ghaziabad</option>
+            <option>Ludhiana</option><option>Agra</option><option>Nashik</option>
+            <option>Faridabad</option><option>Meerut</option><option>Rajkot</option>
+            <option>Varanasi</option><option>Srinagar</option><option>Amritsar</option>
+            <option>Allahabad</option><option>Coimbatore</option><option>Ranchi</option>
+            <option>Guwahati</option><option>Chandigarh</option><option>Kochi</option>
+            <option>Bhubaneswar</option><option>Dehradun</option><option>Navi Mumbai</option>
+            <option>Other</option>
+          </select>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Email</label>
@@ -1542,6 +1754,10 @@
    CONSTANTS
 ============================================================ */
 // Demo mode — no external database (sample data only)
+const NOCODB_TOKEN  = "";
+const NOCODB_BASE   = "";
+const NOCODB_TABLES = {};
+
 const TENANT_ID = "77777777-7777-7777-7777-777777777777";
 const OWNER_ID  = "11111111-1111-1111-1111-111111111111";
 
@@ -1553,112 +1769,125 @@ let ACCESS_LIST = {
   "tristan":    { password: "3058",  display: "Tristan" },
   "rohan":      { password: "RTAV",  display: "Rohan" },
   "roshan":     { password: "1234",  display: "Roshan" },
-  "mahalaxmi":  { password: "1234",  display: "Mahalaxmi" },
-  "leander":    { password: "2627",  display: "Leander"}
+  "mahalaxmi":  { password: "1234",  display: "Mahalaxmi" }
 };
 
 /* ============================================================
    STORE — async engine backed by fetch()
    Falls back to in-memory state when server is unreachable
 ============================================================ */
-const API_BASE_URL = window.CRM_API_BASE_URL || "/api";
-
 const Store = (() => {
   /* =====================================================
-     EMPTY DATA — Load from live database via /api/sync
+     SAMPLE DATA — realistic AV integration company CRM
   ===================================================== */
   const _mem = {
-    companies: [],
-    contacts: [],
-    leads: [],
-    deals: [],
-    quotes: [],
-    tasks: [],
-    activities: []
+    companies: [
+      { id:"co1", name:"Skyline Convention Centre", industry:"Events & Hospitality", city:"Mumbai", revenue:"$8.5M", employees:120, website:"skylinecc.in" },
+      { id:"co2", name:"Pinnacle Hotels Group",     industry:"Hospitality",          city:"Delhi",  revenue:"$22M",  employees:450, website:"pinnaclehotels.com" },
+      { id:"co3", name:"TechPark Offices Ltd",      industry:"Commercial Real Estate",city:"Pune",   revenue:"$5M",   employees:80,  website:"techparkindia.com" },
+      { id:"co4", name:"BlueStar Education Trust",  industry:"Education",            city:"Bangalore",revenue:"$3M",  employees:200, website:"bluestaredu.org" },
+      { id:"co5", name:"Meridian Broadcasting",     industry:"Media & Broadcasting", city:"Mumbai", revenue:"$15M",  employees:310, website:"meridianbc.tv" },
+      { id:"co6", name:"Nexus Retail Pvt Ltd",      industry:"Retail",               city:"Chennai",revenue:"$12M",  employees:560, website:"nexusretail.in" }
+    ],
+    contacts: [
+      { id:"ct1", first_name:"Arjun",   last_name:"Mehta",     company:"Skyline Convention Centre", email:"arjun.mehta@skylinecc.in",    phone:"+91 98201 11234", title:"AV Director",        status:"active" },
+      { id:"ct2", first_name:"Priya",   last_name:"Sharma",    company:"Pinnacle Hotels Group",     email:"priya.sharma@pinnaclehotels.com",phone:"+91 99876 54321",title:"IT Infrastructure Head",status:"active" },
+      { id:"ct3", first_name:"Rohan",   last_name:"D'Souza",   company:"TechPark Offices Ltd",      email:"rohan.dsouza@techparkindia.com",phone:"+91 95551 88900",title:"Facilities Manager",  status:"active" },
+      { id:"ct4", first_name:"Sneha",   last_name:"Kapoor",    company:"BlueStar Education Trust",  email:"sneha.kapoor@bluestaredu.org",  phone:"+91 87654 32100",title:"Principal",            status:"prospect" },
+      { id:"ct5", first_name:"Vikram",  last_name:"Nair",      company:"Meridian Broadcasting",     email:"vikram.nair@meridianbc.tv",     phone:"+91 92200 77655",title:"Technical Director",  status:"active" },
+      { id:"ct6", first_name:"Anjali",  last_name:"Verma",     company:"Nexus Retail Pvt Ltd",      email:"anjali.verma@nexusretail.in",   phone:"+91 70001 22334",title:"Procurement Head",    status:"active" },
+      { id:"ct7", first_name:"Siddharth",last_name:"Rao",      company:"Skyline Convention Centre", email:"sid.rao@skylinecc.in",          phone:"+91 98765 43210",title:"Event Coordinator",   status:"active" },
+      { id:"ct8", first_name:"Meera",   last_name:"Pillai",    company:"Pinnacle Hotels Group",     email:"meera.pillai@pinnaclehotels.com",phone:"+91 91234 56789",title:"Operations Manager",  status:"prospect" }
+    ],
+    leads: [
+      { id:"ld1", first_name:"Rahul",  last_name:"Joshi",    company:"Orbit Multiplex",           email:"rahul.joshi@orbitmultiplex.com", phone:"+91 98100 56789", source:"Referral",      status:"Hot",      value:180000, notes:"Interested in full-hall AV overhaul for 3 screens.", created_at:"2026-05-10T09:00:00Z" },
+      { id:"ld2", first_name:"Kavita", last_name:"Iyer",     company:"Coastal Resorts Ltd",        email:"kavita.iyer@coastalresorts.com", phone:"+91 77001 22999", source:"LinkedIn",      status:"Moderate", value:95000,  notes:"Needs outdoor poolside sound system.", created_at:"2026-05-18T11:30:00Z" },
+      { id:"ld3", first_name:"Deepak", last_name:"Pillai",   company:"GreenField School",          email:"d.pillai@greenfield.edu",        phone:"+91 88002 33444", source:"Trade Show",    status:"New",      value:62000,  notes:"Met at AV Expo 2026. Smart classroom pilot project.", created_at:"2026-05-22T14:00:00Z" },
+      { id:"ld4", first_name:"Nisha",  last_name:"Gupta",    company:"Prestige Convention Hall",   email:"nisha@prestigecc.in",            phone:"+91 91111 55677", source:"Webinar",       status:"Hot",      value:240000, notes:"Wants turnkey solution — lighting, sound, display.", created_at:"2026-05-28T10:15:00Z" },
+      { id:"ld5", first_name:"Anand",  last_name:"Krishnan", company:"Zephyr Corporate Park",      email:"anand.k@zephyrpark.com",         phone:"+91 99000 12345", source:"Email Campaign",status:"Cold",     value:50000,  notes:"Initial enquiry via newsletter. Follow up needed.", created_at:"2026-06-01T08:45:00Z" }
+    ],
+    deals: [
+      { id:"dl1", name:"Skyline Grand Hall AV Upgrade",   company:"Skyline Convention Centre", contact:"Arjun Mehta",   value:420000, stage:"proposal",    close_date:"2026-07-15", owner:"Tristan", probability:65, notes:"Full Crestron control system + 4K projection. Proposal v2 sent."   , created_at:"2026-04-10T09:00:00Z" },
+      { id:"dl2", name:"Pinnacle Hotels Boardroom Suite", company:"Pinnacle Hotels Group",     contact:"Priya Sharma",  value:185000, stage:"negotiation",  close_date:"2026-06-30", owner:"Rohan",   probability:80, notes:"5 boardrooms. Client wants staged rollout over 3 months.",          created_at:"2026-04-18T11:00:00Z" },
+      { id:"dl3", name:"TechPark Open-Office Sound",      company:"TechPark Offices Ltd",      contact:"Rohan D'Souza", value:98000,  stage:"won",          close_date:"2026-05-20", owner:"Tristan", probability:100,notes:"Signed. Installation begins June 10.",                             created_at:"2026-03-25T10:00:00Z" },
+      { id:"dl4", name:"BlueStar Smart Classroom Pilot",  company:"BlueStar Education Trust",  contact:"Sneha Kapoor",  value:73500,  stage:"prospect",     close_date:"2026-08-01", owner:"Roshan",  probability:40, notes:"3 classrooms as pilot. Budget approval pending from board.",       created_at:"2026-05-05T14:00:00Z" },
+      { id:"dl5", name:"Meridian Studio AV Refresh",      company:"Meridian Broadcasting",     contact:"Vikram Nair",   value:310000, stage:"new deals",    close_date:"2026-09-01", owner:"Rohan",   probability:20, notes:"Early stage. Site survey scheduled for June 12.",                  created_at:"2026-05-30T09:30:00Z" },
+      { id:"dl6", name:"Nexus Retail In-Store Audio",     company:"Nexus Retail Pvt Ltd",      contact:"Anjali Verma",  value:156000, stage:"proposal",     close_date:"2026-07-30", owner:"Tristan", probability:55, notes:"12 stores across South India. Standardised speaker setup.",       created_at:"2026-05-12T16:00:00Z" },
+      { id:"dl7", name:"Orbit Multiplex Screen System",   company:"Orbit Multiplex",           contact:"Rahul Joshi",   value:212000, stage:"prospect",     close_date:"2026-08-20", owner:"Roshan",  probability:35, notes:"Converted from lead. Awaiting technical spec sign-off.",           created_at:"2026-05-15T10:00:00Z" },
+      { id:"dl8", name:"Skyline Hall 2 — Phase 2",        company:"Skyline Convention Centre", contact:"Siddharth Rao", value:95000,  stage:"new deals",    close_date:"2026-10-01", owner:"Tristan", probability:15, notes:"Follow-on from Hall 1 project if Phase 1 goes well.",              created_at:"2026-06-01T08:00:00Z" }
+    ],
+    quotes: [
+      { id:"qt1", number:"RTAV-2026-001", customer:"Skyline Convention Centre", amount:420000, status:"sent",     description:"Full AV package — Crestron control, 4K laser projection, line array speakers.",  created_at:"2026-05-01T09:00:00Z", valid_until:"2026-06-30" },
+      { id:"qt2", number:"RTAV-2026-002", customer:"Pinnacle Hotels Group",     amount:185000, status:"accepted", description:"Boardroom AV suite — video conferencing, ceiling speakers, 85\" displays.",       created_at:"2026-05-10T10:00:00Z", valid_until:"2026-06-15" },
+      { id:"qt3", number:"RTAV-2026-003", customer:"TechPark Offices Ltd",      amount:98000,  status:"accepted", description:"Open-office directional sound system with Dante network audio.",                  created_at:"2026-04-15T11:00:00Z", valid_until:"2026-05-31" },
+      { id:"qt4", number:"RTAV-2026-004", customer:"BlueStar Education Trust",  amount:73500,  status:"draft",    description:"Smart classroom pilot — interactive displays, ceiling mics, teacher station.",    created_at:"2026-05-20T14:00:00Z", valid_until:"2026-07-15" },
+      { id:"qt5", number:"RTAV-2026-005", customer:"Nexus Retail Pvt Ltd",      amount:156000, status:"sent",     description:"Retail in-store BGM system — 12 locations, zone control, IP speakers.",           created_at:"2026-05-25T09:30:00Z", valid_until:"2026-07-01" },
+      { id:"qt6", number:"RTAV-2026-006", customer:"Orbit Multiplex",           amount:212000, status:"draft",    description:"3-screen multiplex AV overhaul — 4K projectors, surround sound, control system.", created_at:"2026-06-02T10:00:00Z", valid_until:"2026-07-31" }
+    ],
+    tasks: [
+      { id:"tk1", title:"Send revised proposal to Skyline",          related:"Skyline Grand Hall AV Upgrade",   due_date:"2026-06-06", priority:"high",   status:"pending"   },
+      { id:"tk2", title:"Schedule site survey — Meridian Studio",     related:"Meridian Studio AV Refresh",      due_date:"2026-06-12", priority:"medium", status:"pending"   },
+      { id:"tk3", title:"Follow up with Priya Sharma on contract",    related:"Pinnacle Hotels Boardroom Suite",  due_date:"2026-06-05", priority:"high",   status:"pending"   },
+      { id:"tk4", title:"Prepare BlueStar classroom demo materials",  related:"BlueStar Smart Classroom Pilot",  due_date:"2026-06-18", priority:"medium", status:"pending"   },
+      { id:"tk5", title:"Call Rahul Joshi — Orbit Multiplex specs",   related:"Orbit Multiplex Screen System",   due_date:"2026-06-07", priority:"medium", status:"pending"   },
+      { id:"tk6", title:"Submit TechPark installation schedule",      related:"TechPark Open-Office Sound",      due_date:"2026-06-04", priority:"high",   status:"completed" },
+      { id:"tk7", title:"Invoice Pinnacle Hotels — deposit 30%",      related:"Pinnacle Hotels Boardroom Suite",  due_date:"2026-06-08", priority:"high",   status:"pending"   },
+      { id:"tk8", title:"Order Crestron panels for Skyline project",  related:"Skyline Grand Hall AV Upgrade",   due_date:"2026-06-15", priority:"medium", status:"pending"   },
+      { id:"tk9", title:"Close quote RTAV-2026-004 with BlueStar",    related:"BlueStar Smart Classroom Pilot",  due_date:"2026-06-20", priority:"low",    status:"pending"   },
+      { id:"tk10",title:"Update CRM pipeline after Nexus call",       related:"Nexus Retail In-Store Audio",     due_date:"2026-06-03", priority:"low",    status:"completed" }
+    ],
+    activities: [
+      { id:"ac1",  type:"note",  title:"Quote RTAV-2026-003 accepted",          meta:"TechPark Offices Ltd · $98,000",          created_at:"2026-05-20T09:10:00Z" },
+      { id:"ac2",  type:"call",  title:"Call with Priya Sharma",                meta:"Pinnacle Hotels Group — negotiation update",created_at:"2026-05-22T11:30:00Z" },
+      { id:"ac3",  type:"quote", title:"Quote sent: RTAV-2026-001",             meta:"Skyline Convention Centre · $420,000",     created_at:"2026-05-01T09:15:00Z" },
+      { id:"ac4",  type:"note",  title:"New lead: Rahul Joshi",                 meta:"Orbit Multiplex",                          created_at:"2026-05-10T09:05:00Z" },
+      { id:"ac5",  type:"task",  title:"Task created: Send revised proposal",   meta:"Skyline Grand Hall AV Upgrade",            created_at:"2026-06-03T08:00:00Z" },
+      { id:"ac6",  type:"quote", title:"Quote accepted: RTAV-2026-002",         meta:"Pinnacle Hotels Group · $185,000",         created_at:"2026-05-12T14:20:00Z" },
+      { id:"ac7",  type:"note",  title:"Deal created: Meridian Studio AV Refresh",meta:"Meridian Broadcasting · $310,000",      created_at:"2026-05-30T09:35:00Z" },
+      { id:"ac8",  type:"email", title:"Email sent to Anjali Verma",            meta:"Nexus Retail — quote follow-up",           created_at:"2026-05-26T10:00:00Z" },
+      { id:"ac9",  type:"note",  title:"Lead converted: Rahul Joshi",           meta:"Orbit Multiplex · $212,000",              created_at:"2026-05-15T10:10:00Z" },
+      { id:"ac10", type:"call",  title:"Site survey confirmed — TechPark",      meta:"TechPark Offices Ltd",                     created_at:"2026-06-03T15:00:00Z" },
+      { id:"ac11", type:"task",  title:"Task completed: Update CRM pipeline",   meta:"Nexus Retail In-Store Audio",              created_at:"2026-06-03T17:30:00Z" },
+      { id:"ac12", type:"note",  title:"New lead: Nisha Gupta",                 meta:"Prestige Convention Hall",                 created_at:"2026-05-28T10:20:00Z" },
+      { id:"ac13", type:"email", title:"Follow-up email — BlueStar board",      meta:"BlueStar Education Trust",                 created_at:"2026-05-21T09:00:00Z" },
+      { id:"ac14", type:"quote", title:"Quote sent: RTAV-2026-005",             meta:"Nexus Retail Pvt Ltd · $156,000",          created_at:"2026-05-25T09:35:00Z" },
+      { id:"ac15", type:"call",  title:"Intro call with Deepak Pillai",         meta:"GreenField School — Trade Show follow-up", created_at:"2026-05-23T11:00:00Z" }
+    ]
   };
 
   /** Lightweight uid for new records */
   function _uid() { return Math.random().toString(36).slice(2, 10); }
 
-  const COLLECTIONS = ["leads", "contacts", "companies", "deals", "quotes", "tasks", "activities"];
+  /** No-op async get (data already seeded) */
+  async function get() { return { ..._mem }; }
 
-  function _replaceInMem(collectionName, record) {
-    if (!COLLECTIONS.includes(collectionName)) throw new Error(`Unknown collection: ${collectionName}`);
-    if (!_mem[collectionName]) _mem[collectionName] = [];
-    const idx = _mem[collectionName].findIndex(r => String(r.id) === String(record.id));
-    if (idx >= 0) _mem[collectionName][idx] = record;
-    else _mem[collectionName].push(record);
-    return record;
-  }
-
-  async function _jsonFetch(url, options = {}) {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers || {})
-      }
-    });
-    if (!response.ok) {
-      const message = await response.text().catch(() => "");
-      throw new Error(message || `Request failed: ${response.status}`);
-    }
-    if (response.status === 204) return null;
-    return response.json();
-  }
-
-  /** Load all operational collections from the unified backend sync endpoint. */
-  async function get() {
-    const data = await _jsonFetch(`${API_BASE_URL}/sync`, { method: "GET" });
-    COLLECTIONS.forEach(name => {
-      _mem[name] = Array.isArray(data[name]) ? data[name] : [];
-    });
-    return _mem;
-  }
-
-  /** Save: create or update a database row, then mirror the returned row locally. */
+  /** Save: just push to in-memory array */
   async function save(collectionName, record) {
-    if (!COLLECTIONS.includes(collectionName)) throw new Error(`Unknown collection: ${collectionName}`);
-    const payload = {
-      ...record,
-      id: record.id || _uid(),
-      tenant_id: record.tenant_id || TENANT_ID,
-      owner_id: record.owner_id || OWNER_ID,
-      created_at: record.created_at || new Date().toISOString()
-    };
-    const saved = await _jsonFetch(`${API_BASE_URL}/${collectionName}`, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-    return _replaceInMem(collectionName, saved);
+    if (!_mem[collectionName]) _mem[collectionName] = [];
+    const payload = { ...record, id: record.id || _uid(), created_at: record.created_at || new Date().toISOString() };
+    _mem[collectionName].push(payload);
+    return payload;
   }
 
-  /** Delete a database row, then remove it from local memory. */
+  /** Remove from in-memory array */
   async function remove(collectionName, id) {
-    if (!COLLECTIONS.includes(collectionName)) throw new Error(`Unknown collection: ${collectionName}`);
-    await _jsonFetch(`${API_BASE_URL}/${collectionName}/${encodeURIComponent(id)}`, { method: "DELETE" });
+    if (!_mem[collectionName]) return;
     _mem[collectionName] = _mem[collectionName].filter(r => String(r.id) !== String(id));
-    return { id };
   }
 
-  /** Update by resubmitting the merged row through the same upsert endpoint. */
+  /** Update in-memory record */
   async function update(collectionName, id, changes) {
     const arr = _mem[collectionName] || [];
     const idx = arr.findIndex(r => String(r.id) === String(id));
-    const current = idx >= 0 ? arr[idx] : { id };
-    return save(collectionName, { ...current, ...changes, id });
+    if (idx >= 0) Object.assign(arr[idx], changes);
+    return arr[idx];
   }
 
   /** Direct in-memory read */
   function read(collectionName) { return _mem[collectionName] || []; }
 
-  /** Seed local memory with a sync payload. */
-  function seed(data) {
-    if (!data) return;
-    COLLECTIONS.forEach(name => {
-      if (Array.isArray(data[name])) _mem[name] = data[name];
-    });
-  }
+  /** Seed (no-op — already seeded above) */
+  function seed(data) {}
 
   return { get, save, remove, update, read, seed };
 })();
@@ -1909,7 +2138,7 @@ const App = {
       return `<span class="badge badge-${c}">${sanitize(s)}</span>`;
     };
     tbody.innerHTML = items.map(l => {
-      // Pull name from normalized fields or any compatible raw field that could hold it.
+      // Pull name from normalised fields OR any raw NocoDB field that could hold it
       const firstName = l.first_name || "";
       const lastName  = l.last_name  || "";
       const fullRaw   = l.Title || l.title || l.Name || l.name || "";
@@ -1918,11 +2147,18 @@ const App = {
       const colors = ["#3b82f6","#a855f7","#06b6d4","#f59e0b","#ef4444"];
       const color = colors[(name.charCodeAt(0) || 0) % colors.length];
       const estVal = l.value ? fmt$(l.value) : "—";
-      const email = sanitize(l.email || l.Email || "—");
+      const emailAddr = l.email || l.Email || "";
+      const emailDisplay = sanitize(emailAddr || "—");
+      if (emailAddr) {
+        const subj = encodeURIComponent("Following Up \u2013 " + (l.company || l.Company || ""));
+        const body = encodeURIComponent("Hi " + (l.first_name || "").trim() + ",\n\nI hope you\u2019re doing well! I wanted to follow up on our previous conversation regarding your AV requirements.\n\nWe at RTAV would love to help bring your vision to life. Could we schedule a quick call this week to discuss next steps?\n\nLooking forward to hearing from you.\n\nWarm regards,\nRTAV Team");
+        App._gmailUrls = App._gmailUrls || {};
+        App._gmailUrls[l.id] = "https://mail.google.com/mail/?view=cm&to=" + encodeURIComponent(emailAddr) + "&su=" + subj + "&body=" + body;
+      }
       return `
         <tr onclick="App.showDetail('lead','${l.id}')">
           <td><div class="who-cell"><span class="av" style="background:${color}">${sanitize(initials)}</span><div class="nm"><strong>${sanitize(name)}</strong></div></div></td>
-          <td><span style="color:var(--accent-blue)">📧 ${email}</span></td>
+          <td>${emailAddr ? `<span style="color:var(--accent-blue);cursor:pointer;" onclick="event.stopPropagation();App.openGmail('${l.id}')" title="Send follow-up email">📧 ${emailDisplay}</span>` : `<span>📧 \u2014</span>`}</td>
           <td>${sanitize(l.company || l.Company || "—")}</td>
           <td>${sourceBadge(l.source || l.Source || "Other")}</td>
           <td>${statusBadge(l.status || l.Status || "New")}</td>
@@ -1976,7 +2212,7 @@ const App = {
       notes: l.notes||""
     };
     await Store.save("deals", record);
-    // Remove the lead from PostgreSQL and in-memory after successful conversion.
+    // Remove the lead from NocoDB and in-memory after successful conversion
     await Store.remove("leads", id);
     await App.logActivity({ type:"quote", title:`Lead converted: ${name}`, meta: `${record.company} · ${fmt$(record.value)}` });
     toast(`"${name}" converted to a New Deal! ⚡`, "success");
@@ -2010,11 +2246,19 @@ const App = {
       const initials = name !== "—" ? name.trim().split(/\s+/).map(w => w[0]).join("").toUpperCase().slice(0,2) : "?";
       const colors = ["#3b82f6","#a855f7","#06b6d4","#f59e0b","#ef4444"];
       const color = colors[(name.charCodeAt(0) || 0) % colors.length];
+      const contactEmail = c.email || c.Email || "";
+      const contactEmailDisplay = sanitize(contactEmail || "—");
+      if (contactEmail) {
+        const subj = encodeURIComponent("Checking In \u2013 " + name);
+        const body = encodeURIComponent("Hi " + (c.first_name || "").trim() + ",\n\nI hope everything is going great! I just wanted to check in and see how things are going on your end.\n\nIf there\u2019s anything we can assist you with or if you have any upcoming AV needs, please don\u2019t hesitate to reach out \u2014 we\u2019re always here to help.\n\nWarm regards,\nRTAV Team");
+        App._gmailUrls = App._gmailUrls || {};
+        App._gmailUrls[c.id] = "https://mail.google.com/mail/?view=cm&to=" + encodeURIComponent(contactEmail) + "&su=" + subj + "&body=" + body;
+      }
       return `
         <tr onclick="App.showDetail('contact', '${c.id}')">
           <td><div class="who-cell"><span class="av" style="background:${color}">${sanitize(initials)}</span><div class="nm"><strong>${sanitize(name)}</strong><small>${sanitize(c.title||c.Title||"")}</small></div></div></td>
           <td>${sanitize(c.company||c.Company||"—")}</td>
-          <td><span style="color:var(--accent-blue)">📧 ${sanitize(c.email||c.Email||"—")}</span></td>
+          <td>${contactEmail ? `<span style="color:var(--accent-blue);cursor:pointer;" onclick="event.stopPropagation();App.openGmail('${c.id}')" title="Send check-up email">📧 ${contactEmailDisplay}</span>` : `<span>📧 \u2014</span>`}</td>
           <td class="td-muted">${sanitize(c.phone||c.Phone||"—")}</td>
           <td>${statusBadge(c.status||c.Status||"active")}</td>
           <td><div class="row-actions">
@@ -2041,6 +2285,8 @@ const App = {
     $("edit-lead-fname").value  = lead.first_name || "";
     $("edit-lead-lname").value  = lead.last_name  || "";
     $("edit-lead-company").value= lead.company    || "";
+    $("edit-lead-industry").value = lead.industry || "";
+    $("edit-lead-city").value   = lead.city       || "";
     $("edit-lead-email").value  = lead.email      || "";
     $("edit-lead-phone").value  = lead.phone      || "";
     $("edit-lead-source").value = lead.source     || "Other";
@@ -2054,10 +2300,16 @@ const App = {
     const id    = $("edit-lead-id").value;
     const fname = $("edit-lead-fname").value.trim();
     if (!fname) { toast("First name is required.", "error"); return; }
+
+    // Capture old lead data for matching related records
+    const oldLead = Store.read("leads").find(l => String(l.id) === String(id)) || {};
+
     const changes = {
       first_name: fname,
       last_name:  $("edit-lead-lname").value.trim(),
       company:    $("edit-lead-company").value.trim(),
+      industry:   $("edit-lead-industry").value,
+      city:       $("edit-lead-city").value,
       email:      $("edit-lead-email").value.trim(),
       phone:      $("edit-lead-phone").value.trim(),
       source:     $("edit-lead-source").value,
@@ -2066,6 +2318,40 @@ const App = {
       notes:      $("edit-lead-notes").value.trim()
     };
     await Store.update("leads", id, changes);
+
+    // Cascade: update the matching contact (same name + old company)
+    const contacts = Store.read("contacts");
+    const matchedContact = contacts.find(c =>
+      c.first_name === oldLead.first_name &&
+      c.last_name  === (oldLead.last_name || "") &&
+      (c.company || "") === (oldLead.company || "")
+    );
+    if (matchedContact) {
+      await Store.update("contacts", matchedContact.id, {
+        first_name: changes.first_name,
+        last_name:  changes.last_name,
+        company:    changes.company,
+        email:      changes.email,
+        phone:      changes.phone
+      });
+    }
+
+    // Cascade: update the matching company record
+    const companies = Store.read("companies");
+    const matchedCompany = companies.find(c =>
+      c.name && c.name.toLowerCase() === (oldLead.company || "").toLowerCase()
+    );
+    if (matchedCompany) {
+      const companyChanges = { contact_name: `${fname} ${changes.last_name}`.trim(), phone: changes.phone, email: changes.email };
+      if (changes.industry) companyChanges.industry = changes.industry;
+      if (changes.city)     companyChanges.city     = changes.city;
+      // If company name itself changed, rename the company too
+      if (changes.company && changes.company.toLowerCase() !== (oldLead.company || "").toLowerCase()) {
+        companyChanges.name = changes.company;
+      }
+      await Store.update("companies", matchedCompany.id, companyChanges);
+    }
+
     App.logActivity({ type:"note", title:`Lead updated: ${fname} ${changes.last_name}`, meta: changes.company });
     App.closeModal("edit-lead");
     toast("Lead updated.", "success");
@@ -2091,6 +2377,10 @@ const App = {
     const id    = $("edit-contact-id").value;
     const fname = $("edit-contact-fname").value.trim();
     if (!fname) { toast("First name is required.", "error"); return; }
+
+    // Capture old contact data for matching
+    const oldContact = Store.read("contacts").find(c => String(c.id) === String(id)) || {};
+
     const changes = {
       first_name: fname,
       last_name:  $("edit-contact-lname").value.trim(),
@@ -2101,6 +2391,37 @@ const App = {
       status:     $("edit-contact-status").value
     };
     await Store.update("contacts", id, changes);
+
+    // Cascade: update the matching lead (same name + old company)
+    const leads = Store.read("leads");
+    const matchedLead = leads.find(l =>
+      l.first_name === oldContact.first_name &&
+      l.last_name  === (oldContact.last_name || "") &&
+      (l.company || "") === (oldContact.company || "")
+    );
+    if (matchedLead) {
+      await Store.update("leads", matchedLead.id, {
+        first_name: changes.first_name,
+        last_name:  changes.last_name,
+        company:    changes.company,
+        email:      changes.email,
+        phone:      changes.phone
+      });
+    }
+
+    // Cascade: update the matching company record
+    const companies = Store.read("companies");
+    const matchedCompany = companies.find(c =>
+      c.name && c.name.toLowerCase() === (oldContact.company || "").toLowerCase()
+    );
+    if (matchedCompany) {
+      const companyChanges = { contact_name: `${fname} ${changes.last_name}`.trim(), phone: changes.phone, email: changes.email };
+      if (changes.company && changes.company.toLowerCase() !== (oldContact.company || "").toLowerCase()) {
+        companyChanges.name = changes.company;
+      }
+      await Store.update("companies", matchedCompany.id, companyChanges);
+    }
+
     App.logActivity({ type:"note", title:`Contact updated: ${fname} ${changes.last_name}`, meta: changes.company });
     App.closeModal("edit-contact");
     toast("Contact updated.", "success");
@@ -2114,11 +2435,11 @@ const App = {
     const q     = App._searchQuery;
     let items   = Store.read("companies");
     if (q) items = items.filter(c =>
-      [c.name, c.industry, c.city].join(" ").toLowerCase().includes(q)
+      [c.name, c.industry, c.city, c.contact_name, c.phone, c.email].join(" ").toLowerCase().includes(q)
     );
     const tbody = $("companies-tbody");
     if (!items.length) {
-      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">🏢</div><div class="empty-state-title">No companies</div></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">🏢</div><div class="empty-state-title">No companies</div></div></td></tr>`;
       return;
     }
     tbody.innerHTML = items.map(c => `
@@ -2126,8 +2447,9 @@ const App = {
         <td><strong>${sanitize(c.name||"")}</strong>${c.website ? `<span class="td-sub">${sanitize(c.website)}</span>` : ""}</td>
         <td>${sanitize(c.industry||"—")}</td>
         <td class="td-muted">${sanitize(c.city||"—")}</td>
-        <td class="td-muted">${c.employees ? sanitize(c.employees) : "—"}</td>
-        <td>${c.revenue ? sanitize(c.revenue) : "—"}</td>
+        <td>${sanitize(c.contact_name||"—")}</td>
+        <td class="td-muted">${sanitize(c.phone||"—")}</td>
+        <td class="td-muted">${sanitize(c.email||"—")}</td>
       </tr>`).join("");
   },
 
@@ -2273,6 +2595,9 @@ const App = {
     const id   = document.getElementById("edit-deal-id").value;
     const name = document.getElementById("edit-deal-name").value.trim();
     if (!name) { toast("Deal name is required.", "error"); return; }
+
+    const oldDeal = Store.read("deals").find(d => String(d.id) === String(id) || String(d.Id) === String(id)) || {};
+
     const changes = {
       name,
       company:    document.getElementById("edit-deal-company").value.trim(),
@@ -2283,6 +2608,18 @@ const App = {
       notes:      document.getElementById("edit-deal-notes").value.trim()
     };
     await Store.update("deals", id, changes);
+
+    // Cascade: if company name changed, rename the company record
+    if (changes.company && (oldDeal.company || "") !== changes.company) {
+      const companies = Store.read("companies");
+      const matchedCompany = companies.find(c =>
+        c.name && c.name.toLowerCase() === (oldDeal.company || "").toLowerCase()
+      );
+      if (matchedCompany) {
+        await Store.update("companies", matchedCompany.id, { name: changes.company });
+      }
+    }
+
     await App.logActivity({ type:"note", title:`Deal updated: ${name}`, meta: changes.company });
     App.closeModal("edit-deal");
     toast("Deal updated.", "success");
@@ -2427,10 +2764,9 @@ const App = {
     // Map tasks by due date
     const tasksByDate = {};
     tasks.forEach(t => {
-      const dueDate = (t.due_date || t.due || "—");
-      if (dueDate === "—") return;
-      tasksByDate[dueDate] = tasksByDate[dueDate] || [];
-      tasksByDate[dueDate].push(t);
+      if (!t.due_date) return;
+      tasksByDate[t.due_date] = tasksByDate[t.due_date] || [];
+      tasksByDate[t.due_date].push(t);
     });
     const dayNamesHtml = dayNames.map(d => `<div class="cal-day-name">${d}</div>`).join("");
     let cells = "";
@@ -2443,8 +2779,7 @@ const App = {
       const dayTasks = tasksByDate[dateStr] || [];
       const todayStart = new Date(now.toDateString());
       const taskDots = dayTasks.slice(0,3).map(t => {
-        const dueDate = (t.due_date || t.due || "—");
-        const isOverdue = t.status !== "completed" && new Date(dueDate) < todayStart;
+        const isOverdue = t.status !== "completed" && new Date(t.due_date) < todayStart;
         const cls = t.status === "completed" ? "done" : isOverdue ? "overdue" : "";
         const shortTitle = t.title && t.title.length > 14 ? t.title.slice(0,13) + "…" : (t.title||"");
         return `<span class="cal-task-dot ${cls}" title="${sanitize(t.title||"")}">${sanitize(shortTitle)}</span>`;
@@ -2492,7 +2827,7 @@ const App = {
     }
     if (!App._taskSelectedDay) { panel.innerHTML = ""; return; }
     const tasks = Store.read("tasks");
-    const dayTasks = tasks.filter(t => (t.due_date || t.due || "—") === App._taskSelectedDay);
+    const dayTasks = tasks.filter(t => t.due_date === App._taskSelectedDay);
     const dateLabel = new Date(App._taskSelectedDay + "T12:00:00").toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
     const todayStart = new Date(new Date().toDateString());
     const priBadge = p => {
@@ -2500,14 +2835,12 @@ const App = {
       return `<span class="badge badge-${m[p]||"gray"}">${sanitize(p)}</span>`;
     };
     const taskRows = dayTasks.length ? dayTasks.map(t => {
-      const dueDate = (t.due_date || t.due || "—");
-      const related = (t.related || t.related_to || "—");
-      const isOverdue = t.status !== "completed" && new Date(dueDate) < todayStart;
+      const isOverdue = t.status !== "completed" && new Date(t.due_date) < todayStart;
       return `<div class="task-row">
         <button class="task-done-btn ${t.status==="completed"?"done":""}" onclick="App.toggleTask('${t.id}')" title="Toggle done">✓</button>
         <div class="task-row-main">
           <b style="${t.status==="completed"?"text-decoration:line-through;color:var(--text-muted)":""}">${sanitize(t.title||"")}</b>
-          <small>${sanitize(related)}</small>
+          <small>${sanitize(t.related||"—")}</small>
         </div>
         ${priBadge(t.priority||"low")}
         <span class="badge badge-${isOverdue?"red":"gray"}" style="font-size:10.5px;">${t.status==="completed"?"✅ Done":isOverdue?"⚠️ Overdue":"📅 Due"}</span>
@@ -2530,16 +2863,16 @@ const App = {
     const q = App._searchQuery;
     let items = Store.read("tasks");
     if (q) items = items.filter(t =>
-      [t.title, (t.related || t.related_to || "—"), t.priority, t.status].join(" ").toLowerCase().includes(q)
+      [t.title, t.related, t.priority, t.status].join(" ").toLowerCase().includes(q)
     );
 
     const todayStart = new Date(new Date().toDateString());
     const todayEnd = new Date(todayStart.getTime() + 86400000);
 
     const groups = [
-      { key:"overdue", label:"⚠️ Overdue", test: t => t.status !== "completed" && new Date(t.due_date || t.due || "—") < todayStart },
-      { key:"today",   label:"📅 Today",   test: t => t.status !== "completed" && new Date(t.due_date || t.due || "—") >= todayStart && new Date(t.due_date || t.due || "—") < todayEnd },
-      { key:"upcoming",label:"🔜 Upcoming", test: t => t.status !== "completed" && new Date(t.due_date || t.due || "—") >= todayEnd },
+      { key:"overdue", label:"⚠️ Overdue", test: t => t.status !== "completed" && new Date(t.due_date) < todayStart },
+      { key:"today",   label:"📅 Today",   test: t => t.status !== "completed" && new Date(t.due_date) >= todayStart && new Date(t.due_date) < todayEnd },
+      { key:"upcoming",label:"🔜 Upcoming", test: t => t.status !== "completed" && new Date(t.due_date) >= todayEnd },
       { key:"done",    label:"✅ Completed", test: t => t.status === "completed" }
     ];
 
@@ -2552,22 +2885,18 @@ const App = {
     groups.forEach(g => {
       const groupItems = items.filter(g.test);
       if (!groupItems.length) return;
-      const rows = groupItems.map(t => {
-        const dueDate = (t.due_date || t.due || "—");
-        const related = (t.related || t.related_to || "—");
-        return `
-          <div class="task-row">
-            <button class="task-done-btn ${t.status==="completed"?"done":""}" onclick="App.toggleTask('${t.id}')" title="Toggle done">✓</button>
-            <div class="task-row-main">
-              <b style="${t.status==="completed"?"text-decoration:line-through;color:var(--text-muted)":""}">${sanitize(t.title||"")}</b>
-              <small>${sanitize(related)}</small>
-            </div>
-            ${priBadge(t.priority||"low")}
-            <span class="badge badge-${g.key==="overdue"?"red":"gray"}" style="font-size:10.5px;">📅 ${dueDate !== "—" ? fmtDate(dueDate) : "—"}</span>
-            <button class="mini-btn" title="Edit" onclick="App.editTask('${t.id}')">✏️</button>
-            <button class="mini-btn danger" onclick="App.deleteTask('${t.id}')">🗑️</button>
-          </div>`;
-      }).join("");
+      const rows = groupItems.map(t => `
+        <div class="task-row">
+          <button class="task-done-btn ${t.status==="completed"?"done":""}" onclick="App.toggleTask('${t.id}')" title="Toggle done">✓</button>
+          <div class="task-row-main">
+            <b style="${t.status==="completed"?"text-decoration:line-through;color:var(--text-muted)":""}">${sanitize(t.title||"")}</b>
+            <small>${sanitize(t.related||"—")}</small>
+          </div>
+          ${priBadge(t.priority||"low")}
+          <span class="badge badge-${g.key==="overdue"?"red":"gray"}" style="font-size:10.5px;">📅 ${t.due_date ? fmtDate(t.due_date) : "—"}</span>
+          <button class="mini-btn" title="Edit" onclick="App.editTask('${t.id}')">✏️</button>
+          <button class="mini-btn danger" onclick="App.deleteTask('${t.id}')">🗑️</button>
+        </div>`).join("");
       html += `<div class="card task-group" style="margin-bottom:14px;">
         <div class="card-header"><span class="card-title">${g.label} <span class="badge badge-gray" style="font-size:10px;">${groupItems.length}</span></span></div>
         <div class="card-body" style="padding:0 18px;">${rows}</div>
@@ -2767,6 +3096,23 @@ const App = {
   /* ----------------------------------------------------------
      SAVE METHODS
   ---------------------------------------------------------- */
+  async autoSaveCompany(companyName, extra) {
+    if (!companyName) return;
+    const existing = Store.read("companies").find(c => c.name && c.name.toLowerCase() === companyName.toLowerCase());
+    if (existing) return; // already exists, skip
+    const record = {
+      id: uid(), name: companyName,
+      industry:      (extra && extra.industry)  || "",
+      city:          (extra && extra.city)       || "",
+      contact_name:  (extra && extra.contact_name) || "",
+      phone:         (extra && extra.phone)      || "",
+      email:         (extra && extra.email)      || "",
+      employees:     "",
+      website:       ""
+    };
+    await Store.save("companies", record);
+  },
+
   async saveLead() {
     const fname = $("lead-fname").value.trim();
     const lname = $("lead-lname").value.trim();
@@ -2774,6 +3120,8 @@ const App = {
     const record = {
       id: uid(), first_name: fname, last_name: lname,
       company: $("lead-company").value.trim(),
+      industry: $("lead-industry").value,
+      city:    $("lead-city").value,
       email:   $("lead-email").value.trim(),
       phone:   $("lead-phone").value.trim(),
       source:  $("lead-source").value,
@@ -2782,7 +3130,7 @@ const App = {
       created_at: new Date().toISOString()
     };
 
-    // Save lead to PostgreSQL and in-memory.
+    // Save lead to NocoDB and in-memory
     const savedLead = await Store.save("leads", record);
 
     // Auto-save to contacts (same person, same info)
@@ -2797,12 +3145,19 @@ const App = {
     };
     await Store.save("contacts", contactRecord);
 
+    // Auto-save company if a company name was provided
+    await App.autoSaveCompany(record.company, {
+      industry: record.industry, city: record.city,
+      contact_name: `${fname} ${lname}`.trim(),
+      phone: record.phone, email: record.email
+    });
+
     App.logActivity({ type:"note", title:`New lead: ${fname} ${lname}`, meta: record.company });
     App.closeModal("add-lead");
     toast("Lead saved and added to Contacts. ✅", "success");
     App.updateBadges();
     // Clear form
-    ["lead-fname","lead-lname","lead-company","lead-email","lead-phone","lead-notes"].forEach(id => $(id).value = "");
+    ["lead-fname","lead-lname","lead-company","lead-industry","lead-city","lead-email","lead-phone","lead-notes"].forEach(id => { const el = $(id); if(el) el.value = ""; });
     // Re-render to show new record immediately
     App.renderCurrentSection();
   },
@@ -2819,6 +3174,11 @@ const App = {
       status:  $("contact-status").value
     };
     await Store.save("contacts", record);
+    // Auto-save company if a company name was provided
+    await App.autoSaveCompany(record.company, {
+      contact_name: `${fname} ${record.last_name}`.trim(),
+      phone: record.phone, email: record.email
+    });
     App.logActivity({ type:"note", title:`Contact added: ${fname} ${record.last_name}`, meta: record.company });
     App.closeModal("add-contact");
     toast("Contact saved.", "success");
@@ -2831,17 +3191,19 @@ const App = {
     if (!name) { toast("Company name is required.", "error"); return; }
     const record = {
       id: uid(), name, industry: $("co-industry").value.trim(),
-      city:      $("co-city").value.trim(),
-      revenue:   $("co-revenue").value.trim(),
-      employees: $("co-employees").value,
-      website:   $("co-website").value.trim()
+      city:          $("co-city").value.trim(),
+      contact_name:  $("co-contact-name").value.trim(),
+      phone:         $("co-phone").value.trim(),
+      email:         $("co-email").value.trim(),
+      employees:     $("co-employees").value,
+      website:       $("co-website").value.trim()
     };
     await Store.save("companies", record);
     App.logActivity({ type:"note", title:`Company added: ${name}`, meta: record.industry });
     App.closeModal("add-company");
     toast("Company saved.", "success");
     App.renderCurrentSection();
-    ["co-name","co-industry","co-city","co-revenue","co-employees","co-website"].forEach(id => $(id).value = "");
+    ["co-name","co-contact-name","co-industry","co-city","co-phone","co-email","co-employees","co-website"].forEach(id => $(id).value = "");
   },
 
   async saveDeal() {
@@ -2925,8 +3287,8 @@ const App = {
     if (!t) return;
     $("edit-task-id").value       = t.id;
     $("edit-task-title").value    = t.title    || "";
-    $("edit-task-related").value  = (t.related || t.related_to || "");
-    $("edit-task-due").value      = (t.due_date || t.due || "");
+    $("edit-task-related").value  = t.related  || "";
+    $("edit-task-due").value      = t.due_date || "";
     $("edit-task-priority").value = t.priority || "low";
     $("edit-task-status").value   = t.status   || "pending";
     App.openModal("edit-task");
@@ -3028,6 +3390,11 @@ const App = {
   /* ----------------------------------------------------------
      LOGOUT
   ---------------------------------------------------------- */
+  openGmail(id) {
+    const url = (this._gmailUrls || {})[id];
+    if (url) window.open(url, "_blank");
+  },
+
   logout() {
     clearSession();
     $("app").classList.remove("visible");
@@ -3090,6 +3457,94 @@ document.querySelectorAll(".modal-overlay").forEach(overlay => {
 // Close stage picker dropdowns when clicking outside
 document.addEventListener("click", () => {
   document.querySelectorAll(".stage-picker-dropdown.open").forEach(el => el.classList.remove("open"));
+});
+</script>
+
+<!-- ============================================================
+     MOBILE BOTTOM NAV
+============================================================ -->
+<div class="mobile-nav" id="mobile-nav">
+  <button class="mobile-nav-item active" data-section="dashboard" onclick="MobileNav.go('dashboard')">
+    <span class="mn-icon">🏠</span>Dashboard
+  </button>
+  <button class="mobile-nav-item" data-section="leads" onclick="MobileNav.go('leads')">
+    <span class="mn-icon">💡</span>Leads
+  </button>
+  <button class="mobile-nav-item" data-section="deals" onclick="MobileNav.go('deals')">
+    <span class="mn-icon">🤝</span>Deals
+  </button>
+  <button class="mobile-nav-item" data-section="tasks" onclick="MobileNav.go('tasks')">
+    <span class="mn-icon">✅</span>Tasks
+  </button>
+  <button class="mobile-nav-item" id="mobile-nav-more-btn" onclick="MobileNav.toggleMore(event)">
+    <span class="mn-icon">☰</span>More
+  </button>
+</div>
+
+<div class="mobile-nav-backdrop" id="mobile-nav-backdrop" onclick="MobileNav.closeMore()"></div>
+<div class="mobile-nav-more-panel" id="mobile-nav-more-panel">
+  <div class="mobile-nav-more-item" data-section="contacts" onclick="MobileNav.go('contacts')">
+    <span class="mn-icon">👥</span> Contacts
+  </div>
+  <div class="mobile-nav-more-item" data-section="companies" onclick="MobileNav.go('companies')">
+    <span class="mn-icon">🏢</span> Companies
+  </div>
+  <div class="mobile-nav-more-item" data-section="quotes" onclick="MobileNav.go('quotes')">
+    <span class="mn-icon">📄</span> Quotes
+  </div>
+  <div class="mobile-nav-more-item" data-section="activity" onclick="MobileNav.go('activity')">
+    <span class="mn-icon">📋</span> Activity
+  </div>
+  <div class="mobile-nav-more-item" data-section="settings" onclick="MobileNav.go('settings')">
+    <span class="mn-icon">⚙️</span> Settings
+  </div>
+  <div class="mobile-nav-more-item" onclick="App.logout(); MobileNav.closeMore();">
+    <span class="mn-icon">🚪</span> Sign Out
+  </div>
+</div>
+
+<script>
+const MobileNav = {
+  go(section) {
+    this.closeMore();
+    const navItem = document.querySelector('.nav-item[data-section="' + section + '"]');
+    if (navItem) navItem.click();
+    document.querySelectorAll('.mobile-nav-item[data-section]').forEach(function(el) {
+      el.classList.toggle('active', el.dataset.section === section);
+    });
+    document.querySelectorAll('.mobile-nav-more-item[data-section]').forEach(function(el) {
+      el.classList.toggle('active', el.dataset.section === section);
+    });
+    var moreSections = ['contacts','companies','quotes','activity','settings'];
+    var moreBtn = document.getElementById('mobile-nav-more-btn');
+    if (moreBtn) moreBtn.classList.toggle('active', moreSections.includes(section));
+  },
+  toggleMore(e) {
+    e.stopPropagation();
+    var panel = document.getElementById('mobile-nav-more-panel');
+    var backdrop = document.getElementById('mobile-nav-backdrop');
+    var isOpen = panel.classList.toggle('open');
+    backdrop.classList.toggle('open', isOpen);
+  },
+  closeMore() {
+    document.getElementById('mobile-nav-more-panel').classList.remove('open');
+    document.getElementById('mobile-nav-backdrop').classList.remove('open');
+  }
+};
+
+document.querySelectorAll('.nav-item[data-section]').forEach(function(item) {
+  item.addEventListener('click', function() {
+    var section = item.dataset.section;
+    document.querySelectorAll('.mobile-nav-item[data-section]').forEach(function(el) {
+      el.classList.toggle('active', el.dataset.section === section);
+    });
+    document.querySelectorAll('.mobile-nav-more-item[data-section]').forEach(function(el) {
+      el.classList.toggle('active', el.dataset.section === section);
+    });
+    var moreSections = ['contacts','companies','quotes','activity','settings'];
+    var moreBtn = document.getElementById('mobile-nav-more-btn');
+    if (moreBtn) moreBtn.classList.toggle('active', moreSections.includes(section));
+  });
 });
 </script>
 </body>
