@@ -1778,7 +1778,7 @@ let ACCESS_LIST = {
 ============================================================ */
 const Store = (() => {
   /* =====================================================
-     LIVE DATA — loads from Vercel serverless /api/leads
+     LIVE DATA — loads from Vercel serverless /api/sync
   ===================================================== */
   const _mem = {
     companies: [],
@@ -1793,25 +1793,74 @@ const Store = (() => {
   /** Lightweight uid for new records */
   function _uid() { return Math.random().toString(36).slice(2, 10); }
 
-  /** No-op async get (data already seeded) */
-  async function get() { return { ..._mem }; }
+  /** Fetch live data from /api/sync */
+  async function get() {
+    try {
+      const res = await fetch('/api/sync');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      
+      // Merge database data with in-memory data
+      _mem.leads = data.leads || [];
+      _mem.contacts = data.contacts || [];
+      _mem.deals = data.deals || [];
+      _mem.tasks = data.tasks || [];
+      _mem.companies = data.companies || [];
+      _mem.activities = data.activities || [];
+      _mem.quotes = data.quotes || [];
+      
+      return { ..._mem };
+    } catch (err) {
+      console.warn('Failed to fetch from /api/sync, using in-memory data:', err);
+      return { ..._mem };
+    }
+  }
 
-  /** Save: POST leads to /api/leads, others to in-memory */
+  /** Save to appropriate endpoint based on collection */
   async function save(collectionName, record) {
     if (!_mem[collectionName]) _mem[collectionName] = [];
     const payload = { ...record, id: record.id || _uid(), created_at: record.created_at || new Date().toISOString() };
     
-    // POST leads to Vercel serverless endpoint
-    if (collectionName === 'leads') {
+    // Map collection names to API endpoints and payloads
+    const apiMap = {
+      leads: {
+        endpoint: '/api/leads',
+        transform: (r) => ({ name: (r.first_name || '') + ' ' + (r.last_name || ''), email: r.email })
+      },
+      contacts: {
+        endpoint: '/api/contacts',
+        transform: (r) => ({ id: r.id, first_name: r.first_name, last_name: r.last_name, email: r.email, phone: r.phone, company: r.company })
+      },
+      deals: {
+        endpoint: '/api/deals',
+        transform: (r) => ({ id: r.id, title: r.title, company: r.company, value: r.value, stage: r.stage, close_date: r.close_date })
+      },
+      tasks: {
+        endpoint: '/api/tasks',
+        transform: (r) => ({ id: r.id, title: r.title, assigned_to: r.assigned_to, due_date: r.due_date, priority: r.priority, completed: r.completed })
+      },
+      companies: {
+        endpoint: '/api/companies',
+        transform: (r) => ({ id: r.id, name: r.name, industry: r.industry, website: r.website, phone: r.phone })
+      },
+      activities: {
+        endpoint: '/api/activities',
+        transform: (r) => ({ id: r.id, type: r.type, description: r.description, related_to: r.related_to })
+      }
+    };
+    
+    // POST to endpoint if available
+    if (apiMap[collectionName]) {
       try {
-        const res = await fetch('/api/leads', {
+        const { endpoint, transform } = apiMap[collectionName];
+        const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: payload.first_name + ' ' + payload.last_name, email: payload.email })
+          body: JSON.stringify(transform(payload))
         });
         if (!res.ok) throw new Error(await res.text());
       } catch (err) {
-        console.error('Failed to save lead to /api/leads:', err);
+        console.error(`Failed to save ${collectionName} to ${apiMap[collectionName].endpoint}:`, err);
       }
     }
     
@@ -1836,8 +1885,16 @@ const Store = (() => {
   /** Direct in-memory read */
   function read(collectionName) { return _mem[collectionName] || []; }
 
-  /** Seed (no-op — already seeded above) */
-  function seed(data) {}
+  /** Seed: populate _mem with data */
+  function seed(data) {
+    if (data.leads) _mem.leads = data.leads;
+    if (data.contacts) _mem.contacts = data.contacts;
+    if (data.deals) _mem.deals = data.deals;
+    if (data.tasks) _mem.tasks = data.tasks;
+    if (data.companies) _mem.companies = data.companies;
+    if (data.activities) _mem.activities = data.activities;
+    if (data.quotes) _mem.quotes = data.quotes;
+  }
 
   return { get, save, remove, update, read, seed };
 })();
