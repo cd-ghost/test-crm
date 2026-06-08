@@ -11,54 +11,76 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const sql = neon(dbUrl);
 
     // 1. Ensure table exists
-    await sql`
-      CREATE TABLE IF NOT EXISTS activities (
-        id TEXT PRIMARY KEY,
-        type TEXT NOT NULL,
-        title TEXT,
-        meta TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `;
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS activities (
+          id TEXT PRIMARY KEY,
+          type TEXT NOT NULL,
+          title TEXT,
+          meta TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `;
+    } catch (err) {
+      console.warn('Table creation warning:', err);
+    }
 
     // 2. GET: Fetch all activities
     if (req.method === 'GET') {
-      const data = await sql`SELECT * FROM activities ORDER BY created_at DESC`;
-      return res.status(200).json(data);
+      try {
+        const data = await sql`SELECT * FROM activities ORDER BY created_at DESC`;
+        return res.status(200).json(data || []);
+      } catch (err) {
+        return res.status(200).json([]);
+      }
     }
 
     // 3. POST: Create new activity
     if (req.method === 'POST') {
-      const { id, type, title, meta } = req.body || {};
-      if (!type) {
-        return res.status(400).json({ error: 'type is required.' });
+      try {
+        const { id, type, title, meta } = req.body || {};
+        if (!type) {
+          return res.status(400).json({ error: 'type is required.' });
+        }
+        
+        await sql`
+          INSERT INTO activities (id, type, title, meta)
+          VALUES (${id}, ${type}, ${title || null}, ${meta || null})
+        `;
+        return res.status(200).json({ success: true });
+      } catch (err) {
+        return res.status(500).json({ error: err instanceof Error ? err.message : 'POST failed' });
       }
-      
-      await sql`
-        INSERT INTO activities (id, type, title, meta)
-        VALUES (${id}, ${type}, ${title || null}, ${meta || null})
-      `;
-      return res.status(200).json({ success: true });
     }
 
     // 4. PUT: Update activity
     if (req.method === 'PUT') {
-      const { id } = req.query;
-      const { type, title, meta } = req.body || {};
-      
-      await sql`
-        UPDATE activities 
-        SET type = ${type}, title = ${title}, meta = ${meta}
-        WHERE id = ${id}
-      `;
-      return res.status(200).json({ success: true });
+      try {
+        const id = (req.query.id as string) || (req.body?.id as string);
+        if (!id) return res.status(400).json({ error: 'id required' });
+        const { type, title, meta } = req.body || {};
+        
+        await sql`
+          UPDATE activities 
+          SET type = ${type}, title = ${title}, meta = ${meta}
+          WHERE id = ${id}
+        `;
+        return res.status(200).json({ success: true });
+      } catch (err) {
+        return res.status(500).json({ error: err instanceof Error ? err.message : 'PUT failed' });
+      }
     }
 
     // 5. DELETE: Remove activity
     if (req.method === 'DELETE') {
-      const { id } = req.query;
-      await sql`DELETE FROM activities WHERE id = ${id}`;
-      return res.status(200).json({ success: true });
+      try {
+        const id = (req.query.id as string) || (req.body?.id as string);
+        if (!id) return res.status(400).json({ error: 'id required' });
+        await sql`DELETE FROM activities WHERE id = ${id}`;
+        return res.status(200).json({ success: true });
+      } catch (err) {
+        return res.status(500).json({ error: err instanceof Error ? err.message : 'DELETE failed' });
+      }
     }
 
     return res.status(405).json({ error: 'Method not allowed' });

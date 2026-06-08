@@ -10,29 +10,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     const sql = neon(dbUrl);
 
-    // Fetch all collections in parallel
-    const [leads, contacts, deals, tasks, companies, activities, quotes] = await Promise.all([
-      sql`SELECT * FROM leads ORDER BY created_at DESC LIMIT 1000`.catch(() => []),
-      sql`SELECT * FROM contacts ORDER BY created_at DESC LIMIT 1000`.catch(() => []),
-      sql`SELECT * FROM deals ORDER BY created_at DESC LIMIT 1000`.catch(() => []),
-      sql`SELECT * FROM tasks ORDER BY created_at DESC LIMIT 1000`.catch(() => []),
-      sql`SELECT * FROM companies ORDER BY created_at DESC LIMIT 1000`.catch(() => []),
-      sql`SELECT * FROM activities ORDER BY created_at DESC LIMIT 1000`.catch(() => []),
-      sql`SELECT * FROM quotes ORDER BY created_at DESC LIMIT 1000`.catch(() => [])
+    // Fetch all collections with individual error handling
+    const results = await Promise.allSettled([
+      sql`SELECT * FROM leads ORDER BY created_at DESC LIMIT 1000`,
+      sql`SELECT * FROM contacts ORDER BY created_at DESC LIMIT 1000`,
+      sql`SELECT * FROM deals ORDER BY created_at DESC LIMIT 1000`,
+      sql`SELECT * FROM tasks ORDER BY created_at DESC LIMIT 1000`,
+      sql`SELECT * FROM companies ORDER BY created_at DESC LIMIT 1000`,
+      sql`SELECT * FROM activities ORDER BY created_at DESC LIMIT 1000`,
+      sql`SELECT * FROM quotes ORDER BY created_at DESC LIMIT 1000`
     ]);
 
+    // Extract results or default to empty arrays
+    const [leadsResult, contactsResult, dealsResult, tasksResult, companiesResult, activitiesResult, quotesResult] = results;
+
     return res.status(200).json({
-      leads: leads || [],
-      contacts: contacts || [],
-      deals: deals || [],
-      tasks: tasks || [],
-      companies: companies || [],
-      activities: activities || [],
-      quotes: quotes || []
+      leads: leadsResult.status === 'fulfilled' ? leadsResult.value : [],
+      contacts: contactsResult.status === 'fulfilled' ? contactsResult.value : [],
+      deals: dealsResult.status === 'fulfilled' ? dealsResult.value : [],
+      tasks: tasksResult.status === 'fulfilled' ? tasksResult.value : [],
+      companies: companiesResult.status === 'fulfilled' ? companiesResult.value : [],
+      activities: activitiesResult.status === 'fulfilled' ? activitiesResult.value : [],
+      quotes: quotesResult.status === 'fulfilled' ? quotesResult.value : []
     });
   } catch (error: any) {
-    // If tables don't exist yet, return empty collections (app will use mock data)
-    console.warn('Sync endpoint error (tables may not exist yet):', error.message);
+    console.error('Sync endpoint error:', error.message);
+    // Return empty collections to allow app to use mock data
     return res.status(200).json({
       leads: [],
       contacts: [],
