@@ -1140,8 +1140,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="App.closeModal('add-lead')">Cancel</button>
-      <button class="btn btn-primary" onclick="App.submitLead(event)">Save Lead</button>
-
+      <button class="btn btn-primary" onclick="App.saveLead()">Save Lead</button>
     </div>
   </div>
 </div>
@@ -1193,8 +1192,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="App.closeModal('add-contact')">Cancel</button>
-      <button class="btn btn-primary" onclick="App.submitContact(event)">Save Contact</button>
-
+      <button class="btn btn-primary" onclick="App.saveContact()">Save Contact</button>
     </div>
   </div>
 </div>
@@ -1248,8 +1246,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="App.closeModal('add-company')">Cancel</button>
-      <button class="btn btn-primary" onclick="App.submitCompany(event)">Save Company</button>
-
+      <button class="btn btn-primary" onclick="App.saveCompany()">Save Company</button>
     </div>
   </div>
 </div>
@@ -1303,8 +1300,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="App.closeModal('add-deal')">Cancel</button>
-      <button class="btn btn-primary" onclick="App.submitDeal(event)">Save Deal</button>
-
+      <button class="btn btn-primary" onclick="App.saveDeal()">Save Deal</button>
     </div>
   </div>
 </div>
@@ -1796,26 +1792,17 @@ let ACCESS_LIST = {
 ============================================================ */
 const Store = (() => {
   /* =====================================================
-     In-memory store (no mock seeding)
+     SAMPLE DATA — realistic AV integration company CRM
   ===================================================== */
-  let _mem = {
-    companies: [],
-    contacts: [],
-    leads: [],
-    deals: [],
-    quotes: [],
-    tasks: [],
-    activities: []
-  };
-
-  /*
-    NOTE:
-    All original mock CRM JSON blocks were removed.
-    Keep this store empty until we seed from the API.
-  */
-
-      // (mock companies removed)
-    
+  const _mem = {
+    companies: [
+      { id:"co1", name:"Skyline Convention Centre", industry:"Events & Hospitality", city:"Mumbai", revenue:"$8.5M", employees:120, website:"skylinecc.in" },
+      { id:"co2", name:"Pinnacle Hotels Group",     industry:"Hospitality",          city:"Delhi",  revenue:"$22M",  employees:450, website:"pinnaclehotels.com" },
+      { id:"co3", name:"TechPark Offices Ltd",      industry:"Commercial Real Estate",city:"Pune",   revenue:"$5M",   employees:80,  website:"techparkindia.com" },
+      { id:"co4", name:"BlueStar Education Trust",  industry:"Education",            city:"Bangalore",revenue:"$3M",  employees:200, website:"bluestaredu.org" },
+      { id:"co5", name:"Meridian Broadcasting",     industry:"Media & Broadcasting", city:"Mumbai", revenue:"$15M",  employees:310, website:"meridianbc.tv" },
+      { id:"co6", name:"Nexus Retail Pvt Ltd",      industry:"Retail",               city:"Chennai",revenue:"$12M",  employees:560, website:"nexusretail.in" }
+    ],
     contacts: [
       { id:"ct1", first_name:"Arjun",   last_name:"Mehta",     company:"Skyline Convention Centre", email:"arjun.mehta@skylinecc.in",    phone:"+91 98201 11234", title:"AV Director",        status:"active" },
       { id:"ct2", first_name:"Priya",   last_name:"Sharma",    company:"Pinnacle Hotels Group",     email:"priya.sharma@pinnaclehotels.com",phone:"+91 99876 54321",title:"IT Infrastructure Head",status:"active" },
@@ -1826,8 +1813,13 @@ const Store = (() => {
       { id:"ct7", first_name:"Siddharth",last_name:"Rao",      company:"Skyline Convention Centre", email:"sid.rao@skylinecc.in",          phone:"+91 98765 43210",title:"Event Coordinator",   status:"active" },
       { id:"ct8", first_name:"Meera",   last_name:"Pillai",    company:"Pinnacle Hotels Group",     email:"meera.pillai@pinnaclehotels.com",phone:"+91 91234 56789",title:"Operations Manager",  status:"prospect" }
     ],
-    leads: [],
-
+    leads: [
+      { id:"ld1", first_name:"Rahul",  last_name:"Joshi",    company:"Orbit Multiplex",           email:"rahul.joshi@orbitmultiplex.com", phone:"+91 98100 56789", source:"Referral",      status:"Hot",      value:180000, notes:"Interested in full-hall AV overhaul for 3 screens.", created_at:"2026-05-10T09:00:00Z" },
+      { id:"ld2", first_name:"Kavita", last_name:"Iyer",     company:"Coastal Resorts Ltd",        email:"kavita.iyer@coastalresorts.com", phone:"+91 77001 22999", source:"LinkedIn",      status:"Moderate", value:95000,  notes:"Needs outdoor poolside sound system.", created_at:"2026-05-18T11:30:00Z" },
+      { id:"ld3", first_name:"Deepak", last_name:"Pillai",   company:"GreenField School",          email:"d.pillai@greenfield.edu",        phone:"+91 88002 33444", source:"Trade Show",    status:"New",      value:62000,  notes:"Met at AV Expo 2026. Smart classroom pilot project.", created_at:"2026-05-22T14:00:00Z" },
+      { id:"ld4", first_name:"Nisha",  last_name:"Gupta",    company:"Prestige Convention Hall",   email:"nisha@prestigecc.in",            phone:"+91 91111 55677", source:"Webinar",       status:"Hot",      value:240000, notes:"Wants turnkey solution — lighting, sound, display.", created_at:"2026-05-28T10:15:00Z" },
+      { id:"ld5", first_name:"Anand",  last_name:"Krishnan", company:"Zephyr Corporate Park",      email:"anand.k@zephyrpark.com",         phone:"+91 99000 12345", source:"Email Campaign",status:"Cold",     value:50000,  notes:"Initial enquiry via newsletter. Follow up needed.", created_at:"2026-06-01T08:45:00Z" }
+    ],
     deals: [
       { id:"dl1", name:"Skyline Grand Hall AV Upgrade",   company:"Skyline Convention Centre", contact:"Arjun Mehta",   value:420000, stage:"proposal",    close_date:"2026-07-15", owner:"Tristan", probability:65, notes:"Full Crestron control system + 4K projection. Proposal v2 sent."   , created_at:"2026-04-10T09:00:00Z" },
       { id:"dl2", name:"Pinnacle Hotels Boardroom Suite", company:"Pinnacle Hotels Group",     contact:"Priya Sharma",  value:185000, stage:"negotiation",  close_date:"2026-06-30", owner:"Rohan",   probability:80, notes:"5 boardrooms. Client wants staged rollout over 3 months.",          created_at:"2026-04-18T11:00:00Z" },
@@ -1846,10 +1838,9 @@ const Store = (() => {
       { id:"qt5", number:"RTAV-2026-005", customer:"Nexus Retail Pvt Ltd",      amount:156000, status:"sent",     description:"Retail in-store BGM system — 12 locations, zone control, IP speakers.",           created_at:"2026-05-25T09:30:00Z", valid_until:"2026-07-01" },
       { id:"qt6", number:"RTAV-2026-006", customer:"Orbit Multiplex",           amount:212000, status:"draft",    description:"3-screen multiplex AV overhaul — 4K projectors, surround sound, control system.", created_at:"2026-06-02T10:00:00Z", valid_until:"2026-07-31" }
     ],
-    tasks: [],
-
-      // mock tasks removed
-
+    tasks: [
+      { id:"tk1", title:"Send revised proposal to Skyline",          related:"Skyline Grand Hall AV Upgrade",   due_date:"2026-06-06", priority:"high",   status:"pending"   },
+      { id:"tk2", title:"Schedule site survey — Meridian Studio",     related:"Meridian Studio AV Refresh",      due_date:"2026-06-12", priority:"medium", status:"pending"   },
       { id:"tk3", title:"Follow up with Priya Sharma on contract",    related:"Pinnacle Hotels Boardroom Suite",  due_date:"2026-06-05", priority:"high",   status:"pending"   },
       { id:"tk4", title:"Prepare BlueStar classroom demo materials",  related:"BlueStar Smart Classroom Pilot",  due_date:"2026-06-18", priority:"medium", status:"pending"   },
       { id:"tk5", title:"Call Rahul Joshi — Orbit Multiplex specs",   related:"Orbit Multiplex Screen System",   due_date:"2026-06-07", priority:"medium", status:"pending"   },
@@ -1859,141 +1850,49 @@ const Store = (() => {
       { id:"tk9", title:"Close quote RTAV-2026-004 with BlueStar",    related:"BlueStar Smart Classroom Pilot",  due_date:"2026-06-20", priority:"low",    status:"pending"   },
       { id:"tk10",title:"Update CRM pipeline after Nexus call",       related:"Nexus Retail In-Store Audio",     due_date:"2026-06-03", priority:"low",    status:"completed" }
     ],
-    activities: [],
-
-      // mock activities removed
-      /*
-      (all mock CRM arrays removed)
-
-      */
-
-
-
-
+    activities: [
+      { id:"ac1",  type:"note",  title:"Quote RTAV-2026-003 accepted",          meta:"TechPark Offices Ltd · $98,000",          created_at:"2026-05-20T09:10:00Z" },
+      { id:"ac2",  type:"call",  title:"Call with Priya Sharma",                meta:"Pinnacle Hotels Group — negotiation update",created_at:"2026-05-22T11:30:00Z" },
+      { id:"ac3",  type:"quote", title:"Quote sent: RTAV-2026-001",             meta:"Skyline Convention Centre · $420,000",     created_at:"2026-05-01T09:15:00Z" },
+      { id:"ac4",  type:"note",  title:"New lead: Rahul Joshi",                 meta:"Orbit Multiplex",                          created_at:"2026-05-10T09:05:00Z" },
+      { id:"ac5",  type:"task",  title:"Task created: Send revised proposal",   meta:"Skyline Grand Hall AV Upgrade",            created_at:"2026-06-03T08:00:00Z" },
+      { id:"ac6",  type:"quote", title:"Quote accepted: RTAV-2026-002",         meta:"Pinnacle Hotels Group · $185,000",         created_at:"2026-05-12T14:20:00Z" },
+      { id:"ac7",  type:"note",  title:"Deal created: Meridian Studio AV Refresh",meta:"Meridian Broadcasting · $310,000",      created_at:"2026-05-30T09:35:00Z" },
+      { id:"ac8",  type:"email", title:"Email sent to Anjali Verma",            meta:"Nexus Retail — quote follow-up",           created_at:"2026-05-26T10:00:00Z" },
+      { id:"ac9",  type:"note",  title:"Lead converted: Rahul Joshi",           meta:"Orbit Multiplex · $212,000",              created_at:"2026-05-15T10:10:00Z" },
+      { id:"ac10", type:"call",  title:"Site survey confirmed — TechPark",      meta:"TechPark Offices Ltd",                     created_at:"2026-06-03T15:00:00Z" },
+      { id:"ac11", type:"task",  title:"Task completed: Update CRM pipeline",   meta:"Nexus Retail In-Store Audio",              created_at:"2026-06-03T17:30:00Z" },
+      { id:"ac12", type:"note",  title:"New lead: Nisha Gupta",                 meta:"Prestige Convention Hall",                 created_at:"2026-05-28T10:20:00Z" },
+      { id:"ac13", type:"email", title:"Follow-up email — BlueStar board",      meta:"BlueStar Education Trust",                 created_at:"2026-05-21T09:00:00Z" },
+      { id:"ac14", type:"quote", title:"Quote sent: RTAV-2026-005",             meta:"Nexus Retail Pvt Ltd · $156,000",          created_at:"2026-05-25T09:35:00Z" },
+      { id:"ac15", type:"call",  title:"Intro call with Deepak Pillai",         meta:"GreenField School — Trade Show follow-up", created_at:"2026-05-23T11:00:00Z" }
+    ]
+  };
 
   /** Lightweight uid for new records */
   function _uid() { return Math.random().toString(36).slice(2, 10); }
 
-  /** Fetch live data from Neon via /api/sync, fallback to mock data */
-  async function get() {
-    try {
-      const res = await fetch('/api/sync');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+  /** No-op async get (data already seeded) */
+  async function get() { return { ..._mem }; }
 
-      // Merge server data (database overrides even when arrays are empty)
-      _mem.leads      = Array.isArray(data.leads) ? data.leads : [];
-      _mem.contacts   = Array.isArray(data.contacts) ? data.contacts : [];
-      _mem.deals      = Array.isArray(data.deals) ? data.deals : [];
-      _mem.tasks      = Array.isArray(data.tasks) ? data.tasks : [];
-      _mem.companies  = Array.isArray(data.companies) ? data.companies : [];
-      _mem.activities = Array.isArray(data.activities) ? data.activities : [];
-      _mem.quotes     = Array.isArray(data.quotes) ? data.quotes : [];
-
-      return { ..._mem };
-    } catch (err) {
-      console.warn('Failed to fetch from /api/sync (returning current in-memory state):', err);
-      return { ..._mem };
-    }
-  }
-
-  /** Save to API endpoint + in-memory array */
+  /** Save: just push to in-memory array */
   async function save(collectionName, record) {
     if (!_mem[collectionName]) _mem[collectionName] = [];
     const payload = { ...record, id: record.id || _uid(), created_at: record.created_at || new Date().toISOString() };
-    
-    // API endpoint mapping
-    const endpoints = {
-      leads:      '/api/leads',
-      contacts:   '/api/contacts',
-      deals:      '/api/deals',
-      tasks:      '/api/tasks',
-      companies:  '/api/companies',
-      activities: '/api/activities',
-      quotes:     '/api/quotes'
-    };
-    
-    // POST to API if endpoint exists
-    if (endpoints[collectionName]) {
-      try {
-        const res = await fetch(endpoints[collectionName], {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) console.warn(`POST ${collectionName}: ${await res.text()}`);
-      } catch (err) {
-        console.warn(`Failed to save ${collectionName}:`, err);
-      }
-    }
-    
-    // Add to in-memory store
     _mem[collectionName].push(payload);
     return payload;
   }
 
-  /** Remove from database + in-memory array */
+  /** Remove from in-memory array */
   async function remove(collectionName, id) {
     if (!_mem[collectionName]) return;
-    
-    // DELETE from API if endpoint exists
-    const endpoints = {
-      leads: '/api/leads',
-      contacts: '/api/contacts',
-      deals: '/api/deals',
-      tasks: '/api/tasks',
-      companies: '/api/companies',
-      activities: '/api/activities',
-      quotes: '/api/quotes'
-    };
-    
-    if (endpoints[collectionName]) {
-      try {
-        const res = await fetch(`${endpoints[collectionName]}/${id}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        if (!res.ok) console.warn(`DELETE ${collectionName}/${id}: ${await res.text()}`);
-      } catch (err) {
-        console.warn(`Failed to delete ${collectionName}/${id}:`, err);
-      }
-    }
-    
-    // Remove from in-memory
     _mem[collectionName] = _mem[collectionName].filter(r => String(r.id) !== String(id));
   }
 
-  /** Update database + in-memory record */
+  /** Update in-memory record */
   async function update(collectionName, id, changes) {
     const arr = _mem[collectionName] || [];
     const idx = arr.findIndex(r => String(r.id) === String(id));
-    
-    // PUT to API if endpoint exists
-    const endpoints = {
-      leads: '/api/leads',
-      contacts: '/api/contacts',
-      deals: '/api/deals',
-      tasks: '/api/tasks',
-      companies: '/api/companies',
-      activities: '/api/activities',
-      quotes: '/api/quotes'
-    };
-    
-    if (endpoints[collectionName] && idx >= 0) {
-      try {
-        const updated = { ...arr[idx], ...changes };
-        const res = await fetch(`${endpoints[collectionName]}/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updated)
-        });
-        if (!res.ok) console.warn(`PUT ${collectionName}/${id}: ${await res.text()}`);
-      } catch (err) {
-        console.warn(`Failed to update ${collectionName}/${id}:`, err);
-      }
-    }
-    
-    // Update in-memory
     if (idx >= 0) Object.assign(arr[idx], changes);
     return arr[idx];
   }
@@ -2001,88 +1900,10 @@ const Store = (() => {
   /** Direct in-memory read */
   function read(collectionName) { return _mem[collectionName] || []; }
 
-  /** Seed: populate _mem with fetched data */
-  function seed(data) {
-    _mem.leads      = Array.isArray(data?.leads) ? data.leads : [];
-    _mem.contacts   = Array.isArray(data?.contacts) ? data.contacts : [];
-    _mem.deals      = Array.isArray(data?.deals) ? data.deals : [];
-    _mem.tasks      = Array.isArray(data?.tasks) ? data.tasks : [];
-    _mem.companies  = Array.isArray(data?.companies) ? data.companies : [];
-    _mem.activities = Array.isArray(data?.activities) ? data.activities : [];
-    _mem.quotes     = Array.isArray(data?.quotes) ? data.quotes : [];
-  }
+  /** Seed (no-op — already seeded above) */
+  function seed(data) {}
 
-  /** Fetch all data from individual API endpoints */
-  async function fetchAll() {
-    const endpoints = {
-      leads: '/api/leads',
-      contacts: '/api/contacts',
-      deals: '/api/deals',
-      tasks: '/api/tasks',
-      companies: '/api/companies',
-      activities: '/api/activities',
-      quotes: '/api/quotes'
-    };
-    
-    const results = {};
-    const errors = [];
-    
-    // Fetch all resources in parallel
-    const fetchPromises = Object.entries(endpoints).map(async ([key, url]) => {
-      try {
-        const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          results[key] = data;
-        } else {
-          errors.push(`${key}: HTTP ${res.status}`);
-        }
-      } catch (e) {
-        errors.push(`${key}: ${e.message}`);
-      }
-    });
-    
-    await Promise.all(fetchPromises);
-    
-    if (errors.length > 0) {
-      console.warn('Some API fetches failed:', errors);
-    }
-    
-    return results;
-  }
-
-  /** Fetch single resource collection from API */
-  async function fetchCollection(collectionName) {
-    const endpoints = {
-      leads: '/api/leads',
-      contacts: '/api/contacts',
-      deals: '/api/deals',
-      tasks: '/api/tasks',
-      companies: '/api/companies',
-      activities: '/api/activities',
-      quotes: '/api/quotes'
-    };
-    
-    const url = endpoints[collectionName];
-    if (!url) return [];
-    
-    try {
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        // Update in-memory store
-        if (Array.isArray(data)) {
-          _mem[collectionName] = data;
-        }
-        return data;
-      }
-    } catch (e) {
-      console.warn(`Failed to fetch ${collectionName}:`, e);
-    }
-    return _mem[collectionName] || [];
-  }
-
-  return { get, save, remove, update, read, seed, fetchAll, fetchCollection };
+  return { get, save, remove, update, read, seed };
 })();
 
 /* ============================================================
@@ -2110,76 +1931,17 @@ function sanitize(str) {
 }
 
 /* ============================================================
-   SESSION — localStorage persistence
+   SESSION
 ============================================================ */
-const SESSION_KEY = 'rtav_session';
 let currentUser = null;
 
 function setSession(user) {
   currentUser = user;
-  // Persist to localStorage for session recovery on refresh
-  if (user) {
-    try {
-      localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-    } catch (e) {
-      console.warn('Failed to persist session:', e);
-    }
-  }
-}
-
-function getSession() {
-  try {
-    const stored = localStorage.getItem(SESSION_KEY);
-    return stored ? JSON.parse(stored) : null;
-  } catch (e) {
-    console.warn('Failed to restore session:', e);
-    return null;
-  }
 }
 
 function clearSession() {
   currentUser = null;
-  try {
-    localStorage.removeItem(SESSION_KEY);
-  } catch (e) {
-    console.warn('Failed to clear session:', e);
-  }
 }
-
-/* ============================================================
-   AUTH STATE RESTORATION — runs on DOMContentLoaded
-   Ensures logged-in users stay logged in after refresh
-============================================================ */
-document.addEventListener('DOMContentLoaded', () => {
-  const savedSession = getSession();
-  if (savedSession && savedSession.username) {
-    // Restore user state
-    currentUser = savedSession;
-    
-    // Verify the user still exists in ACCESS_LIST (account wasn't removed while logged out)
-    const user = ACCESS_LIST[savedSession.username];
-    if (user) {
-      // Restore sidebar user display
-      const display = savedSession.display || savedSession.username;
-      const sidebarUserEl = document.getElementById('sidebar-username-display');
-      const sidebarAvatarEl = document.getElementById('sidebar-avatar');
-      if (sidebarUserEl) sidebarUserEl.textContent = display;
-      if (sidebarAvatarEl) sidebarAvatarEl.textContent = display.charAt(0).toUpperCase();
-      
-      // Show app, hide login page
-      const loginPage = document.getElementById('login-page');
-      const appEl = document.getElementById('app');
-      if (loginPage) loginPage.style.display = 'none';
-      if (appEl) appEl.classList.add('visible');
-      
-      // Boot the application
-      App.boot();
-    } else {
-      // User no longer exists, clear session
-      clearSession();
-    }
-  }
-});
 
 /* ============================================================
    APP OBJECT
@@ -2198,17 +1960,10 @@ const App = {
     $("loading-overlay").classList.remove("hidden");
 
     try {
-      // Fetch all data from individual API endpoints (and overwrite empty arrays)
-      const apiData = await Store.fetchAll();
-      Store.seed(apiData);
+      const data = await Store.get();
+      Store.seed(data);
     } catch (e) {
-      // Server unavailable — try sync endpoint as fallback
-      try {
-        const data = await Store.get();
-        Store.seed(data);
-      } catch (e2) {
-        console.warn('All data sources unavailable:', e2);
-      }
+      // Server unavailable — start with empty state
     }
 
     $("loading-overlay").classList.add("hidden");
@@ -2235,22 +1990,6 @@ const App = {
 
     // Render dashboard
     App.navigateTo("dashboard");
-  },
-
-  /* ----------------------------------------------------------
-     REFRESH DATA — fetch latest from API endpoints
-  ---------------------------------------------------------- */
-  async refreshData(collectionName) {
-    if (collectionName) {
-      // Refresh single collection
-      await Store.fetchCollection(collectionName);
-      App.renderCurrentSection();
-    } else {
-      // Refresh all collections
-      await Store.fetchAll();
-      App.renderCurrentSection();
-    }
-    App.updateBadges();
   },
 
   /* ----------------------------------------------------------
@@ -2399,10 +2138,7 @@ const App = {
     const tbody = $("leads-tbody");
     if (!tbody) return;
     if (!items.length) {
-      // Keep table empty (no mock/fallback rows)
-      tbody.innerHTML = q
-        ? `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">💡</div><div class="empty-state-title">No leads found</div><div class="empty-state-sub">Try a different search.</div></div></td></tr>`
-        : `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">💡</div><div class="empty-state-title">No leads found</div><div class="empty-state-sub">Add your first lead.</div></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">💡</div><div class="empty-state-title">No leads found</div><div class="empty-state-sub">${q ? "Try a different search." : "Add your first lead."}</div></div></td></tr>`;
       return;
     }
     const sourceBadge = s => {
@@ -2934,28 +2670,18 @@ const App = {
     dropdown.classList.add("open");
   },
 
-  async moveDealStage(id, newStage) {
+  moveDealStage(id, newStage) {
     const deals = Store.read("deals");
     const deal = deals.find(d => d.id === id);
     if (!deal || deal.stage === newStage) return;
     const oldStage = deal.stage;
     deal.stage = newStage;
-    
-    // Persist to API
-    try {
-      await Store.update("deals", id, { stage: newStage });
-    } catch (e) {
-      console.warn('Failed to update deal stage on server:', e);
-    }
-    
     const stageLabel = App.DEAL_STAGES.find(s => s.key === newStage)?.label || newStage;
     const oldLabel   = App.DEAL_STAGES.find(s => s.key === oldStage)?.label  || oldStage;
     App.logActivity({ type:"note", title:`Deal moved: ${deal.name}`, meta: `${oldLabel} → ${stageLabel}` });
     toast(`Moved to "${stageLabel}" ✓`, "success");
     App.updateBadges();
     App.renderDeals();
-    // Refresh from API
-    App.refreshData('deals');
   },
 
   setDealsView(view) {
@@ -3200,45 +2926,22 @@ const App = {
     wrap.innerHTML = html;
   },
 
-  async toggleTask(id) {
+  toggleTask(id) {
     const tasks = Store.read("tasks");
     const t = tasks.find(x => x.id === id);
     if (!t) return;
-    const newStatus = t.status === "completed" ? "pending" : "completed";
-    
-    // Update in memory
-    t.status = newStatus;
-    
-    // Persist to API
-    try {
-      await Store.update("tasks", id, { status: newStatus });
-    } catch (e) {
-      console.warn('Failed to update task status on server:', e);
-    }
-    
-    toast(newStatus === "completed" ? "Task marked complete." : "Task reopened.", "info");
+    t.status = t.status === "completed" ? "pending" : "completed";
+    toast(t.status === "completed" ? "Task marked complete." : "Task reopened.", "info");
     App.renderTasks();
-    // Refresh from API
-    App.refreshData('tasks');
   },
 
-  async deleteTask(id) {
+  deleteTask(id) {
     if (!confirm("Delete this task?")) return;
     const arr = Store.read("tasks");
     const idx = arr.findIndex(t => t.id === id);
     if (idx >= 0) arr.splice(idx, 1);
-    
-    // Delete from API
-    try {
-      await Store.remove("tasks", id);
-    } catch (e) {
-      console.warn('Failed to delete task from server:', e);
-    }
-    
     toast("Task deleted.", "info");
     App.renderTasks();
-    // Refresh from API
-    App.refreshData('tasks');
   },
 
   /* ----------------------------------------------------------
@@ -3427,14 +3130,7 @@ const App = {
     await Store.save("companies", record);
   },
 
-  submitLead(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    return App.saveLead();
-  },
-
   async saveLead() {
-
     const fname = $("lead-fname").value.trim();
     const lname = $("lead-lname").value.trim();
     if (!fname) { toast("First name is required.", "error"); return; }
@@ -3479,22 +3175,11 @@ const App = {
     App.updateBadges();
     // Clear form
     ["lead-fname","lead-lname","lead-company","lead-industry","lead-city","lead-email","lead-phone","lead-notes"].forEach(id => { const el = $(id); if(el) el.value = ""; });
-    // Re-render to show new record immediately and sync with backend
+    // Re-render to show new record immediately
     App.renderCurrentSection();
-    // Refresh data from API endpoints immediately after successful POSTs
-    await App.refreshData('leads');
-    await App.refreshData('contacts');
-
-  },
-
-  submitContact(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    return App.saveContact();
   },
 
   async saveContact() {
-
     const fname = $("contact-fname").value.trim();
     if (!fname) { toast("First name is required.", "error"); return; }
     const record = {
@@ -3516,19 +3201,9 @@ const App = {
     toast("Contact saved.", "success");
     App.renderCurrentSection();
     ["contact-fname","contact-lname","contact-company","contact-email","contact-phone","contact-title"].forEach(id => $(id).value = "");
-    // Refresh data from API endpoints immediately after successful POSTs
-    await App.refreshData('contacts');
-
-  },
-
-  submitCompany(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    return App.saveCompany();
   },
 
   async saveCompany() {
-
     const name = $("co-name").value.trim();
     if (!name) { toast("Company name is required.", "error"); return; }
     const record = {
@@ -3546,19 +3221,9 @@ const App = {
     toast("Company saved.", "success");
     App.renderCurrentSection();
     ["co-name","co-contact-name","co-industry","co-city","co-phone","co-email","co-employees","co-website"].forEach(id => $(id).value = "");
-    // Refresh data from API endpoints immediately after successful POSTs
-    await App.refreshData('companies');
-
-  },
-
-  submitDeal(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    return App.saveDeal();
   },
 
   async saveDeal() {
-
     const name = $("deal-name").value.trim();
     if (!name) { toast("Deal name is required.", "error"); return; }
     const record = {
@@ -3577,9 +3242,6 @@ const App = {
     App.updateBadges();
     App.renderCurrentSection();
     ["deal-name","deal-company","deal-value","deal-close","deal-owner","deal-notes"].forEach(id => $(id).value = "");
-    // Refresh data from API endpoints immediately after successful POSTs
-    await App.refreshData('deals');
-
   },
 
   async saveQuote() {
@@ -3598,8 +3260,6 @@ const App = {
     toast("Quote saved.", "success");
     App.renderCurrentSection();
     ["quote-number","quote-customer","quote-amount","quote-desc"].forEach(id => $(id).value = "");
-    // Refresh data from API endpoints
-    App.refreshData('quotes');
   },
 
   editQuote(id) {
@@ -3670,8 +3330,6 @@ const App = {
     toast("Task updated. Opening Google Calendar… 📅", "success");
     App.saveToGoogleCalendar(changes);
     App.renderTasks();
-    // Refresh data from API endpoints
-    App.refreshData('tasks');
   },
 
   async saveTask() {
@@ -3693,8 +3351,6 @@ const App = {
     App.saveToGoogleCalendar(record);
     App.renderCurrentSection();
     ["task-title","task-related","task-due","task-time"].forEach(id => $(id).value = "");
-    // Refresh data from API endpoints
-    App.refreshData('tasks');
   },
 
   saveUser() {
@@ -3840,8 +3496,7 @@ function handleLogin() {
 }
 
 // Login button click
-$("login-btn").addEventListener("click", (e) => { e.preventDefault(); handleLogin(); });
-
+$("login-btn").addEventListener("click", handleLogin);
 
 // Enter key on login fields
 ["login-username","login-password"].forEach(id => {
