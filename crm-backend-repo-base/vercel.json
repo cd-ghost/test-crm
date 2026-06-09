@@ -14,8 +14,5 @@
         { "key": "X-XSS-Protection", "value": "1; mode=block" }
       ]
     }
-  ],
-  "env": {
-    "DATABASE_URL": "@database-url"
-  }
-}
+  ]
+ 
