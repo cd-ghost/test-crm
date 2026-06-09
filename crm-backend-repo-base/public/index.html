@@ -3840,7 +3840,8 @@ function handleLogin() {
 }
 
 // Login button click
-$("login-btn").addEventListener("click", handleLogin);
+$("login-btn").addEventListener("click", (e) => { e.preventDefault(); handleLogin(); });
+
 
 // Enter key on login fields
 ["login-username","login-password"].forEach(id => {
