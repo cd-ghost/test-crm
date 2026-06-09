@@ -1959,6 +1959,8 @@ const App = {
     // Show loading
     $("loading-overlay").classList.remove("hidden");
 
+    // Always seed initial in-memory state for immediate UI responsiveness.
+    // Then we will switch table rendering to use live API endpoints.
     try {
       const data = await Store.get();
       Store.seed(data);
@@ -1967,6 +1969,7 @@ const App = {
     }
 
     $("loading-overlay").classList.add("hidden");
+
 
     // Wire navigation
     document.querySelectorAll(".nav-item").forEach(el => {
@@ -2032,16 +2035,28 @@ const App = {
     App.renderCurrentSection();
   },
 
-  renderCurrentSection() {
+  async renderCurrentSection() {
     const s = App._currentSection;
     if (s === "dashboard")  App.renderDashboard();
-    if (s === "leads")      App.renderLeads();
-    if (s === "contacts")   App.renderContacts();
+
+    if (s === "leads") {
+      await App.loadLeads();
+      App.renderLeads();
+    }
+    if (s === "contacts") {
+      await App.loadContacts();
+      App.renderContacts();
+    }
+
     if (s === "companies")  App.renderCompanies();
     if (s === "deals")      App.renderDeals();
     if (s === "quotes")     App.renderQuotes();
     if (s === "tasks")      App.renderTasks();
-    if (s === "activity")   App.renderActivity();
+
+    if (s === "activity") {
+      await App.loadActivities();
+      App.renderActivity();
+    }
     if (s === "settings")   App.renderSettings();
   },
 
@@ -2128,6 +2143,29 @@ const App = {
   /* ----------------------------------------------------------
      LEADS
   ---------------------------------------------------------- */
+  async loadLeads() {
+    try {
+      const res = await fetch("/api/leads", { method: "GET" });
+      if (!res.ok) throw new Error(`GET /api/leads failed: ${res.status}`);
+      const data = await res.json();
+      const arr = Array.isArray(data) ? data : [];
+      // Replace in-memory collection so existing render logic/layout stays unchanged.
+      Store.read("leads").length = 0;
+      // Store.read returns the actual in-memory array reference, but in case implementation differs we still fallback.
+      if (Array.isArray(Store.read("leads"))) {
+        Store.read("leads").push(...arr);
+      } else {
+        Store.seed({ ...Store.read(), leads: arr });
+      }
+      return arr;
+    } catch (e) {
+      // Offline/empty DB: keep empty array and let renderLeads show empty state.
+      const leadsArr = Store.read("leads");
+      leadsArr.length = 0;
+      return [];
+    }
+  },
+
   renderLeads() {
     const q   = App._searchQuery;
     let items = Store.read("leads");
@@ -2138,9 +2176,10 @@ const App = {
     const tbody = $("leads-tbody");
     if (!tbody) return;
     if (!items.length) {
-      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">💡</div><div class="empty-state-title">No leads found</div><div class="empty-state-sub">${q ? "Try a different search." : "Add your first lead."}</div></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">💡</div><div class="empty-state-title">No records found</div><div class="empty-state-sub">${q ? "Try a different search." : "No leads in the database."}</div></div></td></tr>`;
       return;
     }
+
     const sourceBadge = s => {
       const map = { Referral:"green", LinkedIn:"blue", "Trade Show":"amber", Webinar:"purple", Partner:"cyan", "Email Campaign":"red" };
       const c = map[s] || "gray";
@@ -2203,7 +2242,11 @@ const App = {
 
   async deleteLead(id) {
     if (!confirm("Delete this lead?")) return;
+    try {
+      await fetch(`/api/leads?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+    } catch (_) {}
     await Store.remove("leads", id);
+
     toast("Lead deleted.", "info");
     App.updateBadges();
     App.renderCurrentSection();
@@ -2238,6 +2281,26 @@ const App = {
   /* ----------------------------------------------------------
      CONTACTS
   ---------------------------------------------------------- */
+  async loadContacts() {
+    try {
+      const res = await fetch("/api/contacts", { method: "GET" });
+      if (!res.ok) throw new Error(`GET /api/contacts failed: ${res.status}`);
+      const data = await res.json();
+      const arr = Array.isArray(data) ? data : [];
+      Store.read("contacts").length = 0;
+      if (Array.isArray(Store.read("contacts"))) {
+        Store.read("contacts").push(...arr);
+      } else {
+        Store.seed({ ...Store.read(), contacts: arr });
+      }
+      return arr;
+    } catch (e) {
+      const contactsArr = Store.read("contacts");
+      contactsArr.length = 0;
+      return [];
+    }
+  },
+
   renderContacts() {
     const q     = App._searchQuery;
     let items   = Store.read("contacts");
@@ -2286,6 +2349,7 @@ const App = {
 
   deleteContact(id) {
     if (!confirm("Delete this contact?")) return;
+    try { fetch(`/api/contacts?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {}); } catch (_) {}
     const arr = Store.read("contacts");
     const idx = arr.findIndex(c => c.id === id);
     if (idx >= 0) arr.splice(idx, 1);
@@ -2960,6 +3024,26 @@ const App = {
     App.renderActivity();
   },
 
+  async loadActivities() {
+    try {
+      const res = await fetch("/api/activities", { method: "GET" });
+      if (!res.ok) throw new Error(`GET /api/activities failed: ${res.status}`);
+      const data = await res.json();
+      const arr = Array.isArray(data) ? data : [];
+      Store.read("activities").length = 0;
+      if (Array.isArray(Store.read("activities"))) {
+        Store.read("activities").push(...arr);
+      } else {
+        Store.seed({ ...Store.read(), activities: arr });
+      }
+      return arr;
+    } catch (e) {
+      const actArr = Store.read("activities");
+      actArr.length = 0;
+      return [];
+    }
+  },
+
   renderActivity() {
     if (!App._actCalState) {
       const now = new Date();
@@ -3131,6 +3215,7 @@ const App = {
   },
 
   async saveLead() {
+    // Preserves existing UX (modal button calls this directly). No submit listeners were changed.
     const fname = $("lead-fname").value.trim();
     const lname = $("lead-lname").value.trim();
     if (!fname) { toast("First name is required.", "error"); return; }
@@ -3147,36 +3232,70 @@ const App = {
       created_at: new Date().toISOString()
     };
 
-    // Save lead to NocoDB and in-memory
-    const savedLead = await Store.save("leads", record);
+    // Live API POST
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(record)
+      });
 
-    // Auto-save to contacts (same person, same info)
-    const contactRecord = {
-      id: uid(), first_name: fname, last_name: lname,
-      company: record.company,
-      email:   record.email,
-      phone:   record.phone,
-      title:   "",
-      status:  "prospect",
-      created_at: new Date().toISOString()
-    };
-    await Store.save("contacts", contactRecord);
+      if (!response.ok) {
+        const errText = await response.text().catch(() => "");
+        throw new Error(errText || `POST /api/leads failed: ${response.status}`);
+      }
 
-    // Auto-save company if a company name was provided
-    await App.autoSaveCompany(record.company, {
-      industry: record.industry, city: record.city,
-      contact_name: `${fname} ${lname}`.trim(),
-      phone: record.phone, email: record.email
-    });
+      // Optional: preserve existing UX behavior by also adding to contacts locally.
+      // (We still refresh from DB right after.)
+      const contactRecord = {
+        id: uid(), first_name: fname, last_name: lname,
+        company: record.company,
+        email:   record.email,
+        phone:   record.phone,
+        title:   "",
+        status:  "prospect",
+        created_at: new Date().toISOString()
+      };
+      // Best-effort: POST contact to live API as well.
+      try {
+        const contactResp = await fetch("/api/contacts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(contactRecord)
+        });
+        if (contactResp.ok) {
+          // keep local in sync only when API succeeded
+          await Store.save("contacts", contactRecord);
+        }
+      } catch (_) {
+        // ignore; final refresh will reflect DB state
+      }
 
-    App.logActivity({ type:"note", title:`New lead: ${fname} ${lname}`, meta: record.company });
-    App.closeModal("add-lead");
-    toast("Lead saved and added to Contacts. ✅", "success");
-    App.updateBadges();
-    // Clear form
-    ["lead-fname","lead-lname","lead-company","lead-industry","lead-city","lead-email","lead-phone","lead-notes"].forEach(id => { const el = $(id); if(el) el.value = ""; });
-    // Re-render to show new record immediately
-    App.renderCurrentSection();
+      // Auto-save company if a company name was provided (best-effort local; DB refresh is source of truth)
+      try {
+        await App.autoSaveCompany(record.company, {
+          industry: record.industry, city: record.city,
+          contact_name: `${fname} ${lname}`.trim(),
+          phone: record.phone, email: record.email
+        });
+      } catch (_) {}
+
+      App.logActivity({ type:"note", title:`New lead: ${fname} ${lname}`, meta: record.company });
+      App.closeModal("add-lead");
+      toast("Lead saved.", "success");
+      App.updateBadges();
+
+      // Clear form
+      ["lead-fname","lead-lname","lead-company","lead-industry","lead-city","lead-email","lead-phone","lead-notes"].forEach(id => { const el = $(id); if(el) el.value = ""; });
+
+      // Refresh only affected tables (no full reload)
+      await App.loadLeads();
+      App.renderLeads();
+      await App.loadContacts();
+      // If user is still on leads section, leave contacts render untouched.
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Failed to save lead.", "error");
+    }
   },
 
   async saveContact() {
@@ -3190,17 +3309,41 @@ const App = {
       title:   $("contact-title").value.trim(),
       status:  $("contact-status").value
     };
-    await Store.save("contacts", record);
-    // Auto-save company if a company name was provided
-    await App.autoSaveCompany(record.company, {
-      contact_name: `${fname} ${record.last_name}`.trim(),
-      phone: record.phone, email: record.email
-    });
-    App.logActivity({ type:"note", title:`Contact added: ${fname} ${record.last_name}`, meta: record.company });
-    App.closeModal("add-contact");
-    toast("Contact saved.", "success");
-    App.renderCurrentSection();
-    ["contact-fname","contact-lname","contact-company","contact-email","contact-phone","contact-title"].forEach(id => $(id).value = "");
+
+    try {
+      const response = await fetch("/api/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(record)
+      });
+
+      if (!response.ok) {
+        const errText = await response.text().catch(() => "");
+        throw new Error(errText || `POST /api/contacts failed: ${response.status}`);
+      }
+
+      // Best-effort local company save to keep UI responsive; DB refresh is source of truth.
+      try {
+        await App.autoSaveCompany(record.company, {
+          contact_name: `${fname} ${record.last_name}`.trim(),
+          phone: record.phone, email: record.email
+        });
+      } catch (_) {}
+
+      App.logActivity({ type:"note", title:`Contact added: ${fname} ${record.last_name}`, meta: record.company });
+      App.closeModal("add-contact");
+      toast("Contact saved.", "success");
+      App.updateBadges();
+
+      // Clear form
+      ["contact-fname","contact-lname","contact-company","contact-email","contact-phone","contact-title"].forEach(id => $(id).value = "");
+
+      // Refresh only contacts table
+      await App.loadContacts();
+      App.renderContacts();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Failed to save contact.", "error");
+    }
   },
 
   async saveCompany() {
