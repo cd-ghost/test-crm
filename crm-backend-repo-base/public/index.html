@@ -3234,10 +3234,14 @@ const App = {
 
     // Live API POST
     try {
+      // IMPORTANT: For NEW creations, do NOT send a client-generated id.
+      // Let the DB assign its own sequential integer primary key.
+      const { id: _omitId, ...payload } = record;
+
       const response = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(record)
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
@@ -3261,7 +3265,12 @@ const App = {
         const contactResp = await fetch("/api/contacts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(contactRecord)
+          // IMPORTANT: For NEW creations, do NOT send a client-generated id.
+          // Let the DB assign its own sequential integer primary key.
+          body: JSON.stringify((() => {
+            const { id: _omitId, ...payload } = contactRecord;
+            return payload;
+          })())
         });
         if (contactResp.ok) {
           // keep local in sync only when API succeeded
