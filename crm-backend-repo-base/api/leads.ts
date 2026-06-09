@@ -1,10 +1,19 @@
 import { neon } from '@neondatabase/serverless';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import crypto from 'crypto'; // Natively available for generating bulletproof unique string IDs
 
 function toNullable(v: any) {
   if (v === undefined || v === null) return null;
   if (typeof v === 'string' && v.trim() === '') return null;
   return v;
+}
+
+// Foolproof numeric sanitizer protecting your NUMERIC database column
+function toNullableNumeric(v: any) {
+  if (v === undefined || v === null) return null;
+  if (typeof v === 'string' && v.trim() === '') return null;
+  const parsed = Number(v);
+  return isNaN(parsed) ? null : parsed;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -17,11 +26,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     const sql = neon(dbUrl);
 
-    // 1. Ensure table exists
+    // 1. Ensure table exists with a native UUID fallback generator
     try {
       await sql`
         CREATE TABLE IF NOT EXISTS leads (
-          id TEXT PRIMARY KEY,
+          id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
           first_name TEXT,
           last_name TEXT,
           company TEXT,
@@ -42,7 +51,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.warn('Table creation warning:', tableErr);
     }
 
-
     // 2. GET: Fetch all leads
     if (req.method === 'GET') {
       try {
@@ -54,7 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // 3. POST: Create new lead
+    // 3. POST: Create or Upsert new lead
     if (req.method === 'POST') {
       try {
         const { id, first_name, last_name, company, email, phone, source, status, industry, value, notes } = req.body || {};
@@ -62,10 +70,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(400).json({ error: 'email is required.' });
         }
 
+        // FOOLPROOF GUARD: If the client didn't supply an ID string, create a fresh one immediately
+        const finalId = (id && typeof id === 'string' && id.trim() !== '') ? id.trim() : crypto.randomUUID();
+
         await sql`
           INSERT INTO leads (id, first_name, last_name, company, email, phone, source, status, industry, value, notes)
           VALUES (
-            ${id},
+            ${finalId},
             ${toNullable(first_name)},
             ${toNullable(last_name)},
             ${toNullable(company)},
@@ -74,7 +85,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             ${toNullable(source)},
             ${toNullable(status)},
             ${toNullable(industry)},
-            ${toNullable(value)},
+            ${toNullableNumeric(value)},
             ${toNullable(notes)}
           )
           ON CONFLICT (id) DO UPDATE SET
@@ -90,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             notes      = EXCLUDED.notes
         `;
 
-        return res.status(200).json({ success: true });
+        return res.status(200).json({ success: true, id: finalId });
       } catch (err) {
         console.error('POST error:', err);
         return res.status(500).json({ error: err instanceof Error ? err.message : 'POST failed' });
@@ -114,7 +125,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               source     = ${toNullable(source)},
               status     = ${toNullable(status)},
               industry   = ${toNullable(industry)},
-              value      = ${toNullable(value)},
+              value      = ${toNullableNumeric(value)},
               notes      = ${toNullable(notes)}
           WHERE id = ${id}
         `;
