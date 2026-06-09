@@ -1799,9 +1799,20 @@ const Store = (() => {
      SAMPLE DATA — realistic AV integration company CRM
   ===================================================== */
   const _mem = {
-    companies: [
-      { id:"co1", name:"Skyline Convention Centre", industry:"Events & Hospitality", city:"Mumbai", revenue:"$8.5M", employees:120, website:"skylinecc.in" },
+    companies: [],
+    contacts: [],
+    leads: [],
+    deals: [],
+    quotes: [],
+    tasks: [],
+    activities: []
+  };
+
+  /* (mock data removed)
+      (mock data body removed)
       { id:"co2", name:"Pinnacle Hotels Group",     industry:"Hospitality",          city:"Delhi",  revenue:"$22M",  employees:450, website:"pinnaclehotels.com" },
+
+
       { id:"co3", name:"TechPark Offices Ltd",      industry:"Commercial Real Estate",city:"Pune",   revenue:"$5M",   employees:80,  website:"techparkindia.com" },
       { id:"co4", name:"BlueStar Education Trust",  industry:"Education",            city:"Bangalore",revenue:"$3M",  employees:200, website:"bluestaredu.org" },
       { id:"co5", name:"Meridian Broadcasting",     industry:"Media & Broadcasting", city:"Mumbai", revenue:"$15M",  employees:310, website:"meridianbc.tv" },
@@ -1817,13 +1828,8 @@ const Store = (() => {
       { id:"ct7", first_name:"Siddharth",last_name:"Rao",      company:"Skyline Convention Centre", email:"sid.rao@skylinecc.in",          phone:"+91 98765 43210",title:"Event Coordinator",   status:"active" },
       { id:"ct8", first_name:"Meera",   last_name:"Pillai",    company:"Pinnacle Hotels Group",     email:"meera.pillai@pinnaclehotels.com",phone:"+91 91234 56789",title:"Operations Manager",  status:"prospect" }
     ],
-    leads: [
-      { id:"ld1", first_name:"Rahul",  last_name:"Joshi",    company:"Orbit Multiplex",           email:"rahul.joshi@orbitmultiplex.com", phone:"+91 98100 56789", source:"Referral",      status:"Hot",      value:180000, notes:"Interested in full-hall AV overhaul for 3 screens.", created_at:"2026-05-10T09:00:00Z" },
-      { id:"ld2", first_name:"Kavita", last_name:"Iyer",     company:"Coastal Resorts Ltd",        email:"kavita.iyer@coastalresorts.com", phone:"+91 77001 22999", source:"LinkedIn",      status:"Moderate", value:95000,  notes:"Needs outdoor poolside sound system.", created_at:"2026-05-18T11:30:00Z" },
-      { id:"ld3", first_name:"Deepak", last_name:"Pillai",   company:"GreenField School",          email:"d.pillai@greenfield.edu",        phone:"+91 88002 33444", source:"Trade Show",    status:"New",      value:62000,  notes:"Met at AV Expo 2026. Smart classroom pilot project.", created_at:"2026-05-22T14:00:00Z" },
-      { id:"ld4", first_name:"Nisha",  last_name:"Gupta",    company:"Prestige Convention Hall",   email:"nisha@prestigecc.in",            phone:"+91 91111 55677", source:"Webinar",       status:"Hot",      value:240000, notes:"Wants turnkey solution — lighting, sound, display.", created_at:"2026-05-28T10:15:00Z" },
-      { id:"ld5", first_name:"Anand",  last_name:"Krishnan", company:"Zephyr Corporate Park",      email:"anand.k@zephyrpark.com",         phone:"+91 99000 12345", source:"Email Campaign",status:"Cold",     value:50000,  notes:"Initial enquiry via newsletter. Follow up needed.", created_at:"2026-06-01T08:45:00Z" }
-    ],
+    leads: [],
+
     deals: [
       { id:"dl1", name:"Skyline Grand Hall AV Upgrade",   company:"Skyline Convention Centre", contact:"Arjun Mehta",   value:420000, stage:"proposal",    close_date:"2026-07-15", owner:"Tristan", probability:65, notes:"Full Crestron control system + 4K projection. Proposal v2 sent."   , created_at:"2026-04-10T09:00:00Z" },
       { id:"dl2", name:"Pinnacle Hotels Boardroom Suite", company:"Pinnacle Hotels Group",     contact:"Priya Sharma",  value:185000, stage:"negotiation",  close_date:"2026-06-30", owner:"Rohan",   probability:80, notes:"5 boardrooms. Client wants staged rollout over 3 months.",          created_at:"2026-04-18T11:00:00Z" },
@@ -1842,9 +1848,10 @@ const Store = (() => {
       { id:"qt5", number:"RTAV-2026-005", customer:"Nexus Retail Pvt Ltd",      amount:156000, status:"sent",     description:"Retail in-store BGM system — 12 locations, zone control, IP speakers.",           created_at:"2026-05-25T09:30:00Z", valid_until:"2026-07-01" },
       { id:"qt6", number:"RTAV-2026-006", customer:"Orbit Multiplex",           amount:212000, status:"draft",    description:"3-screen multiplex AV overhaul — 4K projectors, surround sound, control system.", created_at:"2026-06-02T10:00:00Z", valid_until:"2026-07-31" }
     ],
-    tasks: [
-      { id:"tk1", title:"Send revised proposal to Skyline",          related:"Skyline Grand Hall AV Upgrade",   due_date:"2026-06-06", priority:"high",   status:"pending"   },
-      { id:"tk2", title:"Schedule site survey — Meridian Studio",     related:"Meridian Studio AV Refresh",      due_date:"2026-06-12", priority:"medium", status:"pending"   },
+    tasks: [],
+
+      // mock tasks removed
+
       { id:"tk3", title:"Follow up with Priya Sharma on contract",    related:"Pinnacle Hotels Boardroom Suite",  due_date:"2026-06-05", priority:"high",   status:"pending"   },
       { id:"tk4", title:"Prepare BlueStar classroom demo materials",  related:"BlueStar Smart Classroom Pilot",  due_date:"2026-06-18", priority:"medium", status:"pending"   },
       { id:"tk5", title:"Call Rahul Joshi — Orbit Multiplex specs",   related:"Orbit Multiplex Screen System",   due_date:"2026-06-07", priority:"medium", status:"pending"   },
@@ -1854,9 +1861,15 @@ const Store = (() => {
       { id:"tk9", title:"Close quote RTAV-2026-004 with BlueStar",    related:"BlueStar Smart Classroom Pilot",  due_date:"2026-06-20", priority:"low",    status:"pending"   },
       { id:"tk10",title:"Update CRM pipeline after Nexus call",       related:"Nexus Retail In-Store Audio",     due_date:"2026-06-03", priority:"low",    status:"completed" }
     ],
-    activities: [
-      { id:"ac1",  type:"note",  title:"Quote RTAV-2026-003 accepted",          meta:"TechPark Offices Ltd · $98,000",          created_at:"2026-05-20T09:10:00Z" },
-      { id:"ac2",  type:"call",  title:"Call with Priya Sharma",                meta:"Pinnacle Hotels Group — negotiation update",created_at:"2026-05-22T11:30:00Z" },
+    activities: [],
+
+      // mock activities removed
+      /*
+      (all mock CRM arrays removed)
+
+      */
+
+
       { id:"ac3",  type:"quote", title:"Quote sent: RTAV-2026-001",             meta:"Skyline Convention Centre · $420,000",     created_at:"2026-05-01T09:15:00Z" },
       { id:"ac4",  type:"note",  title:"New lead: Rahul Joshi",                 meta:"Orbit Multiplex",                          created_at:"2026-05-10T09:05:00Z" },
       { id:"ac5",  type:"task",  title:"Task created: Send revised proposal",   meta:"Skyline Grand Hall AV Upgrade",            created_at:"2026-06-03T08:00:00Z" },
@@ -1882,19 +1895,19 @@ const Store = (() => {
       const res = await fetch('/api/sync');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      
-      // Merge database data with mock data (database overrides if not empty)
-      if (data.leads && data.leads.length > 0) _mem.leads = data.leads;
-      if (data.contacts && data.contacts.length > 0) _mem.contacts = data.contacts;
-      if (data.deals && data.deals.length > 0) _mem.deals = data.deals;
-      if (data.tasks && data.tasks.length > 0) _mem.tasks = data.tasks;
-      if (data.companies && data.companies.length > 0) _mem.companies = data.companies;
-      if (data.activities && data.activities.length > 0) _mem.activities = data.activities;
-      if (data.quotes && data.quotes.length > 0) _mem.quotes = data.quotes;
-      
+
+      // Merge server data (database overrides even when arrays are empty)
+      _mem.leads      = Array.isArray(data.leads) ? data.leads : [];
+      _mem.contacts   = Array.isArray(data.contacts) ? data.contacts : [];
+      _mem.deals      = Array.isArray(data.deals) ? data.deals : [];
+      _mem.tasks      = Array.isArray(data.tasks) ? data.tasks : [];
+      _mem.companies  = Array.isArray(data.companies) ? data.companies : [];
+      _mem.activities = Array.isArray(data.activities) ? data.activities : [];
+      _mem.quotes     = Array.isArray(data.quotes) ? data.quotes : [];
+
       return { ..._mem };
     } catch (err) {
-      console.warn('Failed to fetch from /api/sync, using mock data:', err);
+      console.warn('Failed to fetch from /api/sync (returning current in-memory state):', err);
       return { ..._mem };
     }
   }
@@ -2005,13 +2018,13 @@ const Store = (() => {
 
   /** Seed: populate _mem with fetched data */
   function seed(data) {
-    if (data.leads && data.leads.length > 0) _mem.leads = data.leads;
-    if (data.contacts && data.contacts.length > 0) _mem.contacts = data.contacts;
-    if (data.deals && data.deals.length > 0) _mem.deals = data.deals;
-    if (data.tasks && data.tasks.length > 0) _mem.tasks = data.tasks;
-    if (data.companies && data.companies.length > 0) _mem.companies = data.companies;
-    if (data.activities && data.activities.length > 0) _mem.activities = data.activities;
-    if (data.quotes && data.quotes.length > 0) _mem.quotes = data.quotes;
+    _mem.leads      = Array.isArray(data?.leads) ? data.leads : [];
+    _mem.contacts   = Array.isArray(data?.contacts) ? data.contacts : [];
+    _mem.deals      = Array.isArray(data?.deals) ? data.deals : [];
+    _mem.tasks      = Array.isArray(data?.tasks) ? data.tasks : [];
+    _mem.companies  = Array.isArray(data?.companies) ? data.companies : [];
+    _mem.activities = Array.isArray(data?.activities) ? data.activities : [];
+    _mem.quotes     = Array.isArray(data?.quotes) ? data.quotes : [];
   }
 
   /** Fetch all data from individual API endpoints */
@@ -2200,16 +2213,10 @@ const App = {
     $("loading-overlay").classList.remove("hidden");
 
     try {
-      // First try to fetch all data from individual API endpoints
+      // Fetch all data from individual API endpoints
+      // Seed should overwrite even if the API returns empty arrays
       const apiData = await Store.fetchAll();
       Store.seed(apiData);
-      
-      // If API endpoints returned empty data, fall back to /api/sync
-      const hasApiData = Object.values(apiData).some(arr => arr && arr.length > 0);
-      if (!hasApiData) {
-        const syncData = await Store.get();
-        Store.seed(syncData);
-      }
     } catch (e) {
       // Server unavailable — try sync endpoint as fallback
       try {
@@ -2408,7 +2415,10 @@ const App = {
     const tbody = $("leads-tbody");
     if (!tbody) return;
     if (!items.length) {
-      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">💡</div><div class="empty-state-title">No leads found</div><div class="empty-state-sub">${q ? "Try a different search." : "Add your first lead."}</div></div></td></tr>`;
+      // Keep table empty (no mock/fallback rows)
+      tbody.innerHTML = q
+        ? `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">💡</div><div class="empty-state-title">No leads found</div><div class="empty-state-sub">Try a different search.</div></div></td></tr>`
+        : `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">💡</div><div class="empty-state-title">No leads found</div><div class="empty-state-sub">Add your first lead.</div></div></td></tr>`;
       return;
     }
     const sourceBadge = s => {
