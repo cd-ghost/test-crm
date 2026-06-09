@@ -1796,9 +1796,9 @@ let ACCESS_LIST = {
 ============================================================ */
 const Store = (() => {
   /* =====================================================
-     SAMPLE DATA — realistic AV integration company CRM
+     In-memory store (no mock seeding)
   ===================================================== */
-  const _mem = {
+  let _mem = {
     companies: [],
     contacts: [],
     leads: [],
@@ -1807,14 +1807,14 @@ const Store = (() => {
     tasks: [],
     activities: []
   };
-}
 
-  /* (mock data removed)
-      (mock data body removed)
-      { id:"co2", name:"Pinnacle Hotels Group",     industry:"Hospitality",          city:"Delhi",  revenue:"$22M",  employees:450, website:"pinnaclehotels.com" },
+  /* Mock data disabled: original sample arrays removed to prevent syntax issues. */
+  /*
+      NOTE: Original mock CRM JSON blocks were removed due to syntax corruption while disabling mock data.
+      This comment intentionally ends before the rest of the file.
+  */
 
-
-      { id:"co3", name:"TechPark Offices Ltd",      industry:"Commercial Real Estate",city:"Pune",   revenue:"$5M",   employees:80,  website:"techparkindia.com" },
+      { id:"co3"
       { id:"co4", name:"BlueStar Education Trust",  industry:"Education",            city:"Bangalore",revenue:"$3M",  employees:200, website:"bluestaredu.org" },
       { id:"co5", name:"Meridian Broadcasting",     industry:"Media & Broadcasting", city:"Mumbai", revenue:"$15M",  employees:310, website:"meridianbc.tv" },
       { id:"co6", name:"Nexus Retail Pvt Ltd",      industry:"Retail",               city:"Chennai",revenue:"$12M",  employees:560, website:"nexusretail.in" }
