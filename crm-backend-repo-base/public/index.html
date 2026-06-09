@@ -1808,16 +1808,13 @@ const Store = (() => {
     activities: []
   };
 
-  /* Mock data disabled: original sample arrays removed to prevent syntax issues. */
   /*
-      NOTE: Original mock CRM JSON blocks were removed due to syntax corruption while disabling mock data.
-      This comment intentionally ends before the rest of the file.
+    NOTE:
+    All original mock CRM JSON blocks were removed.
+    Keep this store empty until we seed from the API.
   */
 
-      { id:"co3"
-      { id:"co4", name:"BlueStar Education Trust",  industry:"Education",            city:"Bangalore",revenue:"$3M",  employees:200, website:"bluestaredu.org" },
-      { id:"co5", name:"Meridian Broadcasting",     industry:"Media & Broadcasting", city:"Mumbai", revenue:"$15M",  employees:310, website:"meridianbc.tv" },
-      { id:"co6", name:"Nexus Retail Pvt Ltd",      industry:"Retail",               city:"Chennai",revenue:"$12M",  employees:560, website:"nexusretail.in" }
+      // (mock companies removed)
     ],
     contacts: [
       { id:"ct1", first_name:"Arjun",   last_name:"Mehta",     company:"Skyline Convention Centre", email:"arjun.mehta@skylinecc.in",    phone:"+91 98201 11234", title:"AV Director",        status:"active" },
@@ -2201,8 +2198,7 @@ const App = {
     $("loading-overlay").classList.remove("hidden");
 
     try {
-      // Fetch all data from individual API endpoints
-      // Seed should overwrite even if the API returns empty arrays
+      // Fetch all data from individual API endpoints (and overwrite empty arrays)
       const apiData = await Store.fetchAll();
       Store.seed(apiData);
     } catch (e) {
