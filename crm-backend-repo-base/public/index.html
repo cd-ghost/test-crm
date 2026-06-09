@@ -1140,7 +1140,8 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="App.closeModal('add-lead')">Cancel</button>
-      <button class="btn btn-primary" onclick="App.saveLead()">Save Lead</button>
+      <button class="btn btn-primary" onclick="App.submitLead(event)">Save Lead</button>
+
     </div>
   </div>
 </div>
@@ -1192,7 +1193,8 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="App.closeModal('add-contact')">Cancel</button>
-      <button class="btn btn-primary" onclick="App.saveContact()">Save Contact</button>
+      <button class="btn btn-primary" onclick="App.submitContact(event)">Save Contact</button>
+
     </div>
   </div>
 </div>
@@ -1246,7 +1248,8 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="App.closeModal('add-company')">Cancel</button>
-      <button class="btn btn-primary" onclick="App.saveCompany()">Save Company</button>
+      <button class="btn btn-primary" onclick="App.submitCompany(event)">Save Company</button>
+
     </div>
   </div>
 </div>
@@ -1300,7 +1303,8 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="App.closeModal('add-deal')">Cancel</button>
-      <button class="btn btn-primary" onclick="App.saveDeal()">Save Deal</button>
+      <button class="btn btn-primary" onclick="App.submitDeal(event)">Save Deal</button>
+
     </div>
   </div>
 </div>
@@ -3429,7 +3433,14 @@ const App = {
     await Store.save("companies", record);
   },
 
+  submitLead(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    return App.saveLead();
+  },
+
   async saveLead() {
+
     const fname = $("lead-fname").value.trim();
     const lname = $("lead-lname").value.trim();
     if (!fname) { toast("First name is required.", "error"); return; }
@@ -3476,12 +3487,20 @@ const App = {
     ["lead-fname","lead-lname","lead-company","lead-industry","lead-city","lead-email","lead-phone","lead-notes"].forEach(id => { const el = $(id); if(el) el.value = ""; });
     // Re-render to show new record immediately and sync with backend
     App.renderCurrentSection();
-    // Refresh data from API endpoints
-    App.refreshData('leads');
-    App.refreshData('contacts');
+    // Refresh data from API endpoints immediately after successful POSTs
+    await App.refreshData('leads');
+    await App.refreshData('contacts');
+
+  },
+
+  submitContact(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    return App.saveContact();
   },
 
   async saveContact() {
+
     const fname = $("contact-fname").value.trim();
     if (!fname) { toast("First name is required.", "error"); return; }
     const record = {
@@ -3503,11 +3522,19 @@ const App = {
     toast("Contact saved.", "success");
     App.renderCurrentSection();
     ["contact-fname","contact-lname","contact-company","contact-email","contact-phone","contact-title"].forEach(id => $(id).value = "");
-    // Refresh data from API endpoints
-    App.refreshData('contacts');
+    // Refresh data from API endpoints immediately after successful POSTs
+    await App.refreshData('contacts');
+
+  },
+
+  submitCompany(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    return App.saveCompany();
   },
 
   async saveCompany() {
+
     const name = $("co-name").value.trim();
     if (!name) { toast("Company name is required.", "error"); return; }
     const record = {
@@ -3525,11 +3552,19 @@ const App = {
     toast("Company saved.", "success");
     App.renderCurrentSection();
     ["co-name","co-contact-name","co-industry","co-city","co-phone","co-email","co-employees","co-website"].forEach(id => $(id).value = "");
-    // Refresh data from API endpoints
-    App.refreshData('companies');
+    // Refresh data from API endpoints immediately after successful POSTs
+    await App.refreshData('companies');
+
+  },
+
+  submitDeal(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    return App.saveDeal();
   },
 
   async saveDeal() {
+
     const name = $("deal-name").value.trim();
     if (!name) { toast("Deal name is required.", "error"); return; }
     const record = {
@@ -3548,8 +3583,9 @@ const App = {
     App.updateBadges();
     App.renderCurrentSection();
     ["deal-name","deal-company","deal-value","deal-close","deal-owner","deal-notes"].forEach(id => $(id).value = "");
-    // Refresh data from API endpoints
-    App.refreshData('deals');
+    // Refresh data from API endpoints immediately after successful POSTs
+    await App.refreshData('deals');
+
   },
 
   async saveQuote() {
