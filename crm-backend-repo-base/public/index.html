@@ -3131,54 +3131,53 @@ const App = {
   },
 
   async saveLead() {
-    // 1. Gather all data from the form fields
+    const fname = $("lead-fname").value.trim();
+    const lname = $("lead-lname").value.trim();
+    if (!fname) { toast("First name is required.", "error"); return; }
     const record = {
-      first_name: document.getElementById("lead-fname").value.trim(),
-      last_name:  document.getElementById("lead-lname").value.trim(),
-      company:    document.getElementById("lead-company").value.trim(),
-      email:      document.getElementById("lead-email").value.trim(), // Required by your backend
-      phone:      document.getElementById("lead-phone").value.trim(),
-      source:     document.getElementById("lead-source").value,
-      status:     document.getElementById("lead-status")?.value,
-      industry:   document.getElementById("lead-industry").value,
-      value:      document.getElementById("lead-value")?.value.trim() || "",
-      notes:      document.getElementById("lead-notes").value.trim()
+      id: uid(), first_name: fname, last_name: lname,
+      company: $("lead-company").value.trim(),
+      industry: $("lead-industry").value,
+      city:    $("lead-city").value,
+      email:   $("lead-email").value.trim(),
+      phone:   $("lead-phone").value.trim(),
+      source:  $("lead-source").value,
+      notes:   $("lead-notes").value.trim(),
+      status:  "New",
+      created_at: new Date().toISOString()
     };
 
-    // 2. Defensive check for email
-    if (!record.email) {
-      alert("Email is required.");
-      return;
-    }
+    // Save lead to NocoDB and in-memory
+    const savedLead = await Store.save("leads", record);
 
-    try {
-      // 3. Send to your Vercel/Neon backend
-      const response = await fetch('/api/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(record)
-      });
+    // Auto-save to contacts (same person, same info)
+    const contactRecord = {
+      id: uid(), first_name: fname, last_name: lname,
+      company: record.company,
+      email:   record.email,
+      phone:   record.phone,
+      title:   "",
+      status:  "prospect",
+      created_at: new Date().toISOString()
+    };
+    await Store.save("contacts", contactRecord);
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to save lead.");
-      }
+    // Auto-save company if a company name was provided
+    await App.autoSaveCompany(record.company, {
+      industry: record.industry, city: record.city,
+      contact_name: `${fname} ${lname}`.trim(),
+      phone: record.phone, email: record.email
+    });
 
-      // 4. On success: Close modal, clear form, and refresh view
-      App.closeModal("add-lead");
-      ["lead-fname","lead-lname","lead-company","lead-email","lead-phone","lead-notes"].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = "";
-      });
-
-      // Refresh your list to show the new record from the DB
-      App.renderCurrentSection();
-
-    } catch (err) {
-      console.error("Sync error:", err);
-      alert("Error: " + (err && err.message ? err.message : String(err)));
-    }
-  }
+    App.logActivity({ type:"note", title:`New lead: ${fname} ${lname}`, meta: record.company });
+    App.closeModal("add-lead");
+    toast("Lead saved and added to Contacts. ✅", "success");
+    App.updateBadges();
+    // Clear form
+    ["lead-fname","lead-lname","lead-company","lead-industry","lead-city","lead-email","lead-phone","lead-notes"].forEach(id => { const el = $(id); if(el) el.value = ""; });
+    // Re-render to show new record immediately
+    App.renderCurrentSection();
+  },
 
   async saveContact() {
     const fname = $("contact-fname").value.trim();
